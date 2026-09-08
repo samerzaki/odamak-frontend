@@ -5,25 +5,17 @@ import Link from 'next/link';
 import { useLanguage } from '@/contexts/language-context';
 import { useAllSilverPrices } from '@/hooks/use-silver-prices';
 import { SilverAllPricesItem } from '@/types';
-import { formatPriceWithCurrency } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { Sparkline } from '@/components/ui/sparkline';
-import { SectionCard } from '@/components/ui/section-card';
-import { ChangeText } from '@/components/ui/change-badge';
+import { ChangeChip } from '@/components/ui/change-badge';
 
-const SILVER_NAMES: Record<string, { ar: string; en: string }> = {
-  '11': { ar: 'فضة 999 سويسري', en: 'Silver 999 Swiss' },
-  '15': { ar: 'فضة 999 مصري', en: 'Silver 999 Egyptian' },
-  '16': { ar: 'فضة 980', en: 'Silver 980' },
-  '17': { ar: 'فضة 925', en: 'Silver 925' },
-  '18': { ar: 'فضة 800', en: 'Silver 800' },
-  '19': { ar: 'أونصة الفضة العالمية', en: 'Global Silver Ounce' },
-  '800': { ar: 'فضة 800', en: 'Silver 800' },
-  '925': { ar: 'فضة 925', en: 'Silver 925' },
-  '999_swiss': { ar: 'فضة 999 سويسري', en: 'Silver 999 Swiss' },
-  '999_egyptian': { ar: 'فضة 999 مصري', en: 'Silver 999 Egyptian' },
-  ounce: { ar: 'أونصة الفضة العالمية', en: 'Global Silver Ounce' },
+const SILVER_NAMES: Record<string, string> = {
+  '800': 'Silver 800',
+  '925': 'Silver 925',
+  '999_swiss': 'Silver 999 Swiss',
+  '999_egyptian': 'Silver 999 Egyptian',
+  ounce: 'Global Silver Ounce',
 };
 
 interface SilverDataItem {
@@ -31,57 +23,62 @@ interface SilverDataItem {
   name: string;
   sellPrice: number;
   buyPrice: number;
-  changePercent: number;
+  changePercent: number | null;
+  trend: 'up' | 'down' | 'neutral';
   chartPoints: number[];
   currency: string;
+  isOunce: boolean;
 }
 
 function transformApiItem(key: string, data: SilverAllPricesItem, isRTL: boolean): SilverDataItem {
   return {
-    id: key,
-    name: SILVER_NAMES[key]?.[isRTL ? 'ar' : 'en'] ?? (isRTL ? `فضة ${key}` : `Silver ${key}`),
-    sellPrice: data.sell_price,
-    buyPrice: data.buy_price,
-    changePercent: data.spread_percent,
+    id: data.key || key,
+    name: isRTL ? data.name : (SILVER_NAMES[key] ?? data.name),
+    sellPrice: data.price.sell,
+    buyPrice: data.price.buy,
+    changePercent: data.change.percent,
+    trend: data.change.color === 'green' ? 'up' : data.change.color === 'red' ? 'down' : 'neutral',
     chartPoints: data.chart_points ?? [],
     currency: data.currency,
+    isOunce: data.type === 'ounce' || key === 'ounce',
   };
 }
 
-function TableSkeleton() {
+function formatCardPrice(price: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: currency === 'USD' ? 2 : 1,
+    numberingSystem: 'latn',
+  }).format(price);
+}
+
+function PriceCardsSkeleton() {
   return (
-    <SectionCard title="Silver prices" className="overflow-x-auto">
-      <div className="min-w-[720px] space-y-px bg-line2">
-        {[1, 2, 3, 4, 5].map((item) => (
-          <div key={item} className="grid grid-cols-5 gap-4 bg-panel px-5 py-4">
-            <Skeleton className="h-5 w-28" />
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {[1, 2, 3, 4, 5].map((item) => (
+        <div key={item} className="card-surface min-w-0 space-y-5 p-5">
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-8 w-32" />
+          <div className="flex justify-between border-t border-line2 pt-4">
             <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-7 w-20" />
           </div>
-        ))}
-      </div>
-    </SectionCard>
+        </div>
+      ))}
+    </div>
   );
 }
 
 export default function SilverPage() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const isRTL = language === 'ar';
   const locale = isRTL ? 'ar-EG' : 'en-US';
   const direction = isRTL ? 'rtl' : 'ltr';
-  const align = isRTL ? 'right' : 'left';
   const { data, isLoading, error } = useAllSilverPrices('EGP', '30d');
 
-  const silverItems: SilverDataItem[] = [];
-  if (data?.data?.silver) {
-    Object.entries(data.data.silver).forEach(([key, value]) => {
-      if (value && typeof value === 'object' && 'sell_price' in value) {
-        silverItems.push(transformApiItem(key, value as SilverAllPricesItem, isRTL));
-      }
-    });
-  }
+  const silverItems = Object.entries(data?.data?.silver ?? {})
+    .filter((entry): entry is [string, SilverAllPricesItem] => Boolean(entry[1]?.price))
+    .map(([key, value]) => transformApiItem(key, value, isRTL));
 
   const features = [
     { icon: Calculator, title: isRTL ? 'حاسبة الفضة' : 'Silver Calculator', description: isRTL ? 'احسب قيمة الفضة بالوزن' : 'Calculate silver value by weight', href: '/silver/calculator' },
@@ -97,9 +94,9 @@ export default function SilverPage() {
       />
 
       {isLoading ? (
-        <TableSkeleton />
+        <PriceCardsSkeleton />
       ) : error || !data ? (
-        <div className="card-surface p-6 border border-down/20">
+        <div className="card-surface border border-down/20 p-6">
           <div className="flex items-center gap-3">
             <AlertCircle className="h-6 w-6 text-down" />
             <div>
@@ -109,45 +106,63 @@ export default function SilverPage() {
           </div>
         </div>
       ) : (
-        <SectionCard title={isRTL ? 'جدول أسعار الفضة' : 'Silver price table'} className="overflow-x-auto">
-          <div className="min-w-[720px]">
-            <div
-              className="grid items-center px-[22px] py-3.5 bg-panel2 text-[12px] text-muted"
-              style={{ gridTemplateColumns: '1.25fr 1fr 1fr 0.75fr 0.8fr', direction }}
-            >
-              <span style={{ textAlign: align }}>{isRTL ? 'النوع' : 'Type'}</span>
-              <span style={{ textAlign: align }}>{t.gold.sellPrice}</span>
-              <span style={{ textAlign: align }}>{t.gold.buyPrice}</span>
-              <span style={{ textAlign: align }}>{t.gold.changeColumn}</span>
-              <span className="text-end">{t.gold.days30Column}</span>
-            </div>
+        <section aria-labelledby="silver-prices-title" dir={direction}>
+          <h2 id="silver-prices-title" className="mb-4 font-heading text-[18px] font-semibold text-text md:text-[20px]">
+            {isRTL ? 'أسعار الفضة حسب النوع' : 'Silver prices by type'}
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {silverItems.map((item) => {
-              const isOunce = item.id === '19' || item.id === 'ounce';
+              const chartTone = item.trend === 'neutral' ? 'gold' : item.trend;
+              const currencyLabel = item.currency === 'EGP' ? (isRTL ? 'ج.م' : 'EGP') : item.currency;
+
               return (
-                <div
-                  key={item.id}
-                  className="grid items-center px-[22px] py-4 border-t border-[var(--line2)] hover:bg-hover transition-colors"
-                  style={{ gridTemplateColumns: '1.25fr 1fr 1fr 0.75fr 0.8fr', direction }}
-                >
-                  <span className="font-heading text-[15px] text-text" style={{ textAlign: align }}>{item.name}</span>
-                  <span className="num text-[16px] md:text-[18px] text-text" style={{ textAlign: align }}>{formatPriceWithCurrency(item.sellPrice, item.currency, locale)}</span>
-                  <span className="num text-[16px] md:text-[18px] text-muted" style={{ textAlign: align }}>{formatPriceWithCurrency(item.buyPrice, item.currency, locale)}</span>
-                  <span style={{ textAlign: align }}><ChangeText value={item.changePercent} direction={direction} /></span>
-                  <span className={`flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                    {item.chartPoints.length > 1 ? <Sparkline data={item.chartPoints} width={64} height={22} tone={isOunce ? 'gold' : 'auto'} /> : <span className="text-dim">—</span>}
-                  </span>
-                </div>
+                <article key={item.id} className="card-surface min-w-0 p-5">
+                  <div className="flex w-full items-start justify-between gap-3" dir={direction}>
+                    <div className="min-w-0" style={{ textAlign: isRTL ? 'right' : 'left' }}>
+                      <h3 className="font-heading text-[14px] font-semibold text-text">{item.name}</h3>
+                      <ChangeChip value={item.changePercent} tone={item.trend === 'neutral' ? undefined : item.trend} className="mt-1.5 !gap-0.5 !rounded-md !px-2 !py-1 !text-[10px] !leading-none" />
+                    </div>
+                  </div>
+
+                  <div className="mt-6" style={{ textAlign: isRTL ? 'right' : 'left' }}>
+                    <p className="text-[12px] text-muted">{isRTL ? 'تشتري من الصائغ' : 'You buy at'}</p>
+                    <p className="num mt-0.5 text-[25px] font-medium leading-tight tracking-[-0.04em] text-text" dir="ltr" style={{ textAlign: isRTL ? 'right' : 'left' }}>
+                      {formatCardPrice(item.sellPrice, item.currency, locale)}
+                      <span className="ms-1.5 font-sans text-[11px] font-normal tracking-normal text-dim">{currencyLabel}</span>
+                    </p>
+                  </div>
+
+                  <div className="mt-5 border-t border-line2 pt-4">
+                    <div className="flex items-end justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] text-muted">{isRTL ? 'تبيع للصائغ' : 'You sell at'}</p>
+                        {item.isOunce ? (
+                          <p className="num mt-0.5 text-[14px] leading-tight text-dim">—</p>
+                        ) : (
+                          <p className="num mt-0.5 text-[14px] leading-tight text-text" dir="ltr">
+                            {formatCardPrice(item.buyPrice, item.currency, locale)}
+                            <span className="ms-1 font-sans text-[10px] font-normal text-dim">{currencyLabel}</span>
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-[72px] text-end">
+                        <p className="mb-1 text-[10px] text-muted">{isRTL ? '30 يوم' : '30 Days'}</p>
+                        {item.chartPoints.length > 1 && <Sparkline data={item.chartPoints} width={84} height={28} tone={chartTone} className="ms-auto" />}
+                      </div>
+                    </div>
+                  </div>
+                </article>
               );
             })}
           </div>
-        </SectionCard>
+        </section>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {features.map((feature) => (
-          <Link key={feature.href} href={feature.href} className="group card-surface p-6 hover:shadow-gold transition-shadow">
-            <div className="inline-flex p-3 rounded-lg bg-gold-soft mb-4"><feature.icon className="h-6 w-6 text-gold" /></div>
-            <h3 className="font-heading text-lg font-bold text-text mb-2 group-hover:text-gold transition-colors">{feature.title}</h3>
+          <Link key={feature.href} href={feature.href} className="group card-surface p-6 transition-shadow hover:shadow-gold">
+            <div className="mb-4 inline-flex rounded-lg bg-gold-soft p-3"><feature.icon className="h-6 w-6 text-gold" /></div>
+            <h3 className="mb-2 font-heading text-lg font-bold text-text transition-colors group-hover:text-gold">{feature.title}</h3>
             <p className="text-sm text-muted">{feature.description}</p>
           </Link>
         ))}

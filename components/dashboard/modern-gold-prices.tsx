@@ -1,6 +1,6 @@
 'use client';
 
-import { GoldPriceTable } from '@/components/gold/gold-price-table';
+import { GoldPriceCards } from '@/components/gold/gold-price-table';
 import type { ModernGoldDataItem } from './modern-gold-prices-server';
 
 interface ModernGoldPricesClientProps {
@@ -9,5 +9,5 @@ interface ModernGoldPricesClientProps {
 }
 
 export function ModernGoldPricesClient({ goldData }: ModernGoldPricesClientProps) {
-  return <GoldPriceTable goldData={goldData} />;
+  return <GoldPriceCards goldData={goldData} />;
 }

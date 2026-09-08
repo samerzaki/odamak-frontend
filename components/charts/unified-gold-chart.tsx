@@ -5,6 +5,7 @@ import { formatPrice, formatDate } from '@/lib/format';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/language-context';
+import { cn } from '@/lib/utils';
 
 type GoldPeriod = '24h' | '7d' | '30d' | '1y' | 'all';
 
@@ -32,7 +33,6 @@ export function UnifiedGoldChart({ data, title, period = '30d', onPeriodChange, 
     k24: true,
     k21: true,
     k18: true,
-    usd: true,
   });
 
   const toggleLine = (lineKey: keyof typeof visibleLines) => {
@@ -73,27 +73,42 @@ export function UnifiedGoldChart({ data, title, period = '30d', onPeriodChange, 
         k18: point18?.price,
       };
 
-      // Add USD rates if available
-      if (data.usd_rates) {
-        const usdPoint = (data.usd_rates.chart_points ?? []).find(usd => usd.date === date);
-        if (usdPoint) {
-          dataPoint.usdSellRate = usdPoint.sell_rate;
-          dataPoint.usdBuyRate = usdPoint.buy_rate;
-        }
-      }
-
       mergedData.push(dataPoint);
     }
 
     return mergedData;
   }, [data]);
 
+  const goldDomain = useMemo<[number, number] | ['auto', 'auto']>(() => {
+    const visibleKeys = [
+      visibleLines.k24 && 'k24',
+      visibleLines.k21 && 'k21',
+      visibleLines.k18 && 'k18',
+    ].filter((key): key is 'k24' | 'k21' | 'k18' => Boolean(key));
+    const values = chartData.flatMap((point) =>
+      visibleKeys.map((key) => point[key]).filter((value): value is number => Number.isFinite(value))
+    );
+
+    if (!values.length) return ['auto', 'auto'];
+
+    const minimum = Math.min(...values);
+    const maximum = Math.max(...values);
+    const range = maximum - minimum || Math.max(maximum * 0.04, 1);
+    const step = 10 ** Math.floor(Math.log10(range));
+    const padding = Math.ceil((range * 0.1) / step) * step;
+
+    return [
+      Math.floor((minimum - padding) / step) * step,
+      Math.ceil((maximum + padding) / step) * step,
+    ];
+  }, [chartData, visibleLines]);
+
   if (!data) return null;
 
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4 px-5 pt-5 md:px-6 md:pt-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <h3 className="font-heading text-[18px] md:text-[20px] font-semibold text-text">{effectiveTitle}</h3>
 
@@ -113,56 +128,28 @@ export function UnifiedGoldChart({ data, title, period = '30d', onPeriodChange, 
           )}
         </div>
 
-        {/* Checkbox Filters */}
-        <div className="flex flex-wrap gap-4 p-4 bg-panel2 rounded-xl">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={visibleLines.k24}
-              onChange={() => toggleLine('k24')}
-              className="w-4 h-4 accent-gold rounded"
-            />
-            <span className="text-[13px] font-medium text-text">{t.gold.karat24}</span>
-            <div className="w-8 h-0.5" style={{ background: 'var(--gold)' }}></div>
-          </label>
-
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={visibleLines.k21}
-              onChange={() => toggleLine('k21')}
-              className="w-4 h-4 accent-gold rounded"
-            />
-            <span className="text-[13px] font-medium text-text">{t.gold.karat21}</span>
-            <div className="w-8 h-0.5" style={{ background: 'var(--up)' }}></div>
-          </label>
-
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={visibleLines.k18}
-              onChange={() => toggleLine('k18')}
-              className="w-4 h-4 accent-gold rounded"
-            />
-            <span className="text-[13px] font-medium text-text">{t.gold.karat18}</span>
-            <div className="w-8 h-0.5" style={{ background: 'var(--muted)' }}></div>
-          </label>
-
-          {data.usd_rates && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={visibleLines.usd}
-                onChange={() => toggleLine('usd')}
-                className="w-4 h-4 accent-gold rounded"
-              />
-              <span className="text-[13px] font-medium text-text">{t.charts.usdExchangeRate}</span>
-              <div className="flex items-center gap-1">
-                <div className="w-6 h-0.5" style={{ borderTop: '1.5px dashed var(--up)' }}></div>
-                <div className="w-6 h-0.5" style={{ borderTop: '1.5px dashed var(--down)' }}></div>
-              </div>
-            </label>
-          )}
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: 'k24' as const, label: t.gold.karat24, color: 'var(--gold)' },
+            { key: 'k21' as const, label: t.gold.karat21, color: 'var(--up)' },
+            { key: 'k18' as const, label: t.gold.karat18, color: 'var(--muted)' },
+          ].map(({ key, label, color }) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={visibleLines[key]}
+              onClick={() => toggleLine(key)}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors',
+                visibleLines[key]
+                  ? 'border-gold-line bg-gold-soft text-text'
+                  : 'border-line bg-panel text-muted hover:bg-hover'
+              )}
+            >
+              <span>{label}</span>
+              <span className="h-1.5 w-5 rounded-full" style={{ backgroundColor: color }} />
+            </button>
+          ))}
         </div>
       </div>
 
@@ -180,7 +167,7 @@ export function UnifiedGoldChart({ data, title, period = '30d', onPeriodChange, 
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 5, right: data.usd_rates ? 60 : 30, left: 20, bottom: 60 }}
+            margin={{ top: 0, right: 0, left: 0, bottom: 48 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--line2)" />
             <XAxis
@@ -197,19 +184,11 @@ export function UnifiedGoldChart({ data, title, period = '30d', onPeriodChange, 
             />
             <YAxis
               yAxisId="gold"
+              domain={goldDomain}
               stroke="var(--muted)"
               style={{ fontSize: '12px' }}
               tickFormatter={(value) => `${value.toLocaleString('en-US')}`}
             />
-            {data.usd_rates && (
-              <YAxis
-                yAxisId="usd"
-                orientation="right"
-                stroke="var(--up)"
-                style={{ fontSize: '12px' }}
-                tickFormatter={(value) => `${value.toFixed(2)}`}
-              />
-            )}
             <Tooltip
               contentStyle={{
                 backgroundColor: 'var(--panel)',
@@ -223,28 +202,23 @@ export function UnifiedGoldChart({ data, title, period = '30d', onPeriodChange, 
                   k24: t.gold.karat24,
                   k21: t.gold.karat21,
                   k18: t.gold.karat18,
-                  usdSellRate: t.charts.usdSellRate,
-                  usdBuyRate: t.charts.usdBuyRate,
                 };
 
                 const field = name ?? '';
-                const isUSD = field === 'usdSellRate' || field === 'usdBuyRate';
 
                 return [
-                  isUSD ? (value ?? 0).toFixed(2) : formatPrice(value ?? 0),
+                  formatPrice(value ?? 0),
                   labels[field] || field
                 ];
               }}
             />
             <Legend
-              wrapperStyle={{ paddingTop: '10px' }}
+              wrapperStyle={{ paddingTop: '10px', fontSize: '11px' }}
               formatter={(value) => {
                 const labels: Record<string, string> = {
                   k24: t.gold.karat24,
                   k21: t.gold.karat21,
                   k18: t.gold.karat18,
-                  usdSellRate: t.charts.usdSellRate,
-                  usdBuyRate: t.charts.usdBuyRate,
                 };
                 return labels[value] || value;
               }}
@@ -288,31 +262,6 @@ export function UnifiedGoldChart({ data, title, period = '30d', onPeriodChange, 
               />
             )}
 
-            {/* USD Rate Lines (if available) */}
-            {data.usd_rates && visibleLines.usd && (
-              <>
-                <Line
-                  yAxisId="usd"
-                  type="monotone"
-                  dataKey="usdSellRate"
-                  name={t.charts.usdSellRate}
-                  stroke="var(--up)"
-                  strokeWidth={1.5}
-                  strokeDasharray="5 5"
-                  dot={false}
-                />
-                <Line
-                  yAxisId="usd"
-                  type="monotone"
-                  dataKey="usdBuyRate"
-                  name={t.charts.usdBuyRate}
-                  stroke="var(--down)"
-                  strokeWidth={1.5}
-                  strokeDasharray="5 5"
-                  dot={false}
-                />
-              </>
-            )}
           </LineChart>
         </ResponsiveContainer>
       </div>

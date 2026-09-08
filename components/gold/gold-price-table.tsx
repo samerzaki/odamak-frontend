@@ -1,9 +1,7 @@
 'use client';
 
-import { SectionCard } from '@/components/ui/section-card';
 import { Sparkline } from '@/components/ui/sparkline';
-import { ChangeText } from '@/components/ui/change-badge';
-import { formatPriceWithCurrency } from '@/lib/format';
+import { ChangeChip } from '@/components/ui/change-badge';
 import { useLanguage } from '@/contexts/language-context';
 import { translations, type Language } from '@/lib/translations';
 import { useEffect, useState } from 'react';
@@ -22,11 +20,20 @@ function getName(nameKey: string, t: any) {
   return names[nameKey] || nameKey;
 }
 
-interface GoldPriceTableProps {
+function formatCardPrice(price: number, currency: string, locale: string) {
+  const fractionDigits = currency === 'USD' ? 2 : 0;
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+    numberingSystem: 'latn',
+  }).format(price);
+}
+
+interface GoldPriceCardsProps {
   goldData: ModernGoldDataItem[];
 }
 
-export function GoldPriceTable({ goldData }: GoldPriceTableProps) {
+export function GoldPriceCards({ goldData }: GoldPriceCardsProps) {
   const { language } = useLanguage();
   const [displayLanguage, setDisplayLanguage] = useState<Language>('ar');
 
@@ -36,63 +43,69 @@ export function GoldPriceTable({ goldData }: GoldPriceTableProps) {
 
   const t = translations[displayLanguage];
   const locale = displayLanguage === 'en' ? 'en-US' : 'ar-EG';
-  const tableDirection = displayLanguage === 'ar' ? 'rtl' : 'ltr';
-  const columnTextAlign = displayLanguage === 'ar' ? 'right' : 'left';
-
+  const direction = displayLanguage === 'ar' ? 'rtl' : 'ltr';
+  const textAlign = displayLanguage === 'ar' ? 'right' : 'left';
+  const currencyLabel = (currency: string) => currency === 'EGP'
+    ? (displayLanguage === 'ar' ? t.common.egp : 'EGP')
+    : currency;
   const rows = ROW_ORDER.map((key) => goldData.find((item) => item.nameKey === key)).filter(
     (item): item is ModernGoldDataItem => Boolean(item)
   );
 
   return (
-    <SectionCard title={t.gold.tableTitle} className="overflow-x-auto">
-      <div className="min-w-[640px]">
-        <div
-          className="grid items-center px-[22px] py-3.5 bg-panel2 text-[12px] text-muted"
-          style={{ gridTemplateColumns: '1.2fr 1fr 1fr 0.8fr 0.8fr', direction: tableDirection }}
-        >
-          <span dir={tableDirection} style={{ direction: tableDirection }}>{t.gold.karatColumn}</span>
-          <span dir={tableDirection} style={{ direction: tableDirection, textAlign: columnTextAlign }}>{t.gold.sellPrice}</span>
-          <span dir={tableDirection} style={{ direction: tableDirection, textAlign: columnTextAlign }}>{t.gold.buyPrice}</span>
-          <span dir={tableDirection} style={{ direction: tableDirection, textAlign: columnTextAlign }}>{t.gold.changeColumn}</span>
-          <span dir={tableDirection} style={{ direction: tableDirection, textAlign: displayLanguage === 'en' ? 'left' : undefined }} className="text-end">{t.gold.days30Column}</span>
-        </div>
+    <section aria-labelledby="gold-prices-title" dir={direction}>
+      <h2 id="gold-prices-title" className="mb-4 font-heading text-[18px] font-semibold text-text md:text-[20px]">
+        {t.gold.tableTitle}
+      </h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {rows.map((item) => {
           const isOunce = item.nameKey === 'ounce';
+          const cardTone = item.trend === 'down' ? 'down' : item.trend === 'up' ? 'up' : 'gold';
+
           return (
-            <div
-              key={item.id}
-              className="grid items-center px-[22px] py-4 border-t border-[var(--line2)] hover:bg-hover transition-colors"
-              style={{ gridTemplateColumns: '1.2fr 1fr 1fr 0.8fr 0.8fr', direction: tableDirection }}
-            >
-              <span dir={tableDirection} style={{ direction: tableDirection }} className="font-heading text-[15px] text-text">{getName(item.nameKey, t)}</span>
-              <span dir={tableDirection} style={{ direction: tableDirection, textAlign: columnTextAlign }}>
-                <span className="num text-[16px] md:text-[18px] text-text" dir={tableDirection} style={{ direction: tableDirection }}>
-                  {formatPriceWithCurrency(item.sellPrice, item.currency, locale)}
-                </span>
-              </span>
-              <span dir={tableDirection} style={{ direction: tableDirection, textAlign: columnTextAlign }}>
-                <span className="num text-[16px] md:text-[18px] text-muted" dir={tableDirection} style={{ direction: tableDirection }}>
-                  {isOunce ? '—' : formatPriceWithCurrency(item.buyPrice, item.currency, locale)}
-                </span>
-              </span>
-              <span dir={tableDirection} style={{ direction: tableDirection, textAlign: columnTextAlign }}>
-                {isOunce ? (
-                  <span className="num text-dim" dir={tableDirection} style={{ direction: tableDirection }}>—</span>
-                ) : (
-                  <ChangeText value={item.changePercent} direction={tableDirection} />
-                )}
-              </span>
-              <span
-                dir={tableDirection}
-                style={{ direction: tableDirection }}
-                className={`flex ${displayLanguage === 'en' ? 'justify-start' : 'justify-end'}`}
-              >
-                <Sparkline data={item.history} width={64} height={22} tone={isOunce ? 'gold' : 'auto'} />
-              </span>
-            </div>
+            <article key={item.id} className="card-surface min-w-0 p-5">
+              <div className="flex w-full items-start justify-between gap-3" dir={direction}>
+                <div className="min-w-0" style={{ textAlign }}>
+                  <h3 className="font-heading text-[14px] font-semibold text-text">{getName(item.nameKey, t)}</h3>
+                  <ChangeChip
+                    value={item.changePercent}
+                    tone={item.trend === 'neutral' ? undefined : item.trend}
+                    className="mt-1.5 !gap-0.5 !rounded-md !px-2 !py-1 !text-[10px] !leading-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6" style={{ textAlign }}>
+                <p className="text-[12px] text-muted">{t.home2026.consumerSell}</p>
+                <p className="num mt-0.5 text-[25px] font-medium leading-tight tracking-[-0.04em] text-text" dir="ltr" style={{ textAlign }}>
+                  {formatCardPrice(item.sellPrice, item.currency, locale)}
+                  <span className="ms-1.5 font-sans text-[11px] font-normal tracking-normal text-dim">{currencyLabel(item.currency)}</span>
+                </p>
+              </div>
+
+              <div className="mt-5 border-t border-line2 pt-4">
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] text-muted">{t.home2026.goldsmithBuy}</p>
+                    {isOunce ? (
+                      <p className="num mt-0.5 text-[14px] leading-tight text-dim">—</p>
+                    ) : (
+                      <p className="num mt-0.5 text-[14px] leading-tight text-text" dir="ltr">
+                        {formatCardPrice(item.buyPrice, item.currency, locale)}
+                        <span className="ms-1 font-sans text-[10px] font-normal text-dim">{currencyLabel(item.currency)}</span>
+                      </p>
+                    )}
+                  </div>
+                  <div className="min-w-[72px] text-end">
+                    <p className="mb-1 text-[10px] text-muted">{t.gold.days30Column}</p>
+                    <Sparkline data={item.history} width={84} height={28} tone={cardTone} className="ms-auto" />
+                  </div>
+                </div>
+              </div>
+            </article>
           );
         })}
       </div>
-    </SectionCard>
+    </section>
   );
 }

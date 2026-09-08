@@ -5,6 +5,7 @@ import { formatDistance } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/language-context';
+import { translations } from '@/lib/translations';
 import { newsDetailPath } from '@/lib/news-routes';
 import { NewsImage } from '@/components/ui/news-image';
 import type { NewsItem } from '@/types';
@@ -16,7 +17,7 @@ interface HotNewsSectionClientProps {
 }
 
 export function HotNewsSectionClient({ news, referenceTime }: HotNewsSectionClientProps) {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   // This streamed boundary can hydrate after the language provider restores a
   // saved client preference. Begin with the server's Arabic default, then
   // switch languages only after hydration has completed.
@@ -27,6 +28,7 @@ export function HotNewsSectionClient({ news, referenceTime }: HotNewsSectionClie
   }, [language]);
 
   const isRTL = displayLanguage === 'ar';
+  const t = translations[displayLanguage];
 
   return (
     <section>

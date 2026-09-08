@@ -13,7 +13,7 @@ type GoldPeriod = '24h' | '7d' | '30d' | '1y' | 'all';
 export function UnifiedGoldChartServer() {
   const { t } = useLanguage();
   const [period, setPeriod] = useState<GoldPeriod>('30d');
-  const { data: historyData, isLoading, isFetching, error } = useGoldHistory(period, 'EGP', true);
+  const { data: historyData, isLoading, isFetching, error } = useGoldHistory(period, 'EGP');
 
   // First load only — show full skeleton
   if (isLoading && !historyData) {
@@ -43,7 +43,7 @@ export function UnifiedGoldChartServer() {
   }
 
   return (
-    <SectionCard padded>
+    <SectionCard>
       <UnifiedGoldChart
         data={historyData.data}
         period={period}

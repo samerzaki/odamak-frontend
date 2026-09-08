@@ -105,16 +105,12 @@ function LoadingSkeleton({ isHero = false }: { isHero?: boolean }) {
 
 export function ModernGoldPricesSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <LoadingSkeleton isHero />
-        <LoadingSkeleton isHero />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <LoadingSkeleton />
-        <LoadingSkeleton />
-        <LoadingSkeleton />
-      </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <LoadingSkeleton />
+      <LoadingSkeleton />
+      <LoadingSkeleton />
+      <LoadingSkeleton />
+      <LoadingSkeleton />
     </div>
   );
 }

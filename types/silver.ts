@@ -51,14 +51,30 @@ export interface SilverAllPricesResponse {
   };
 }
 
-/** The get-all-prices endpoint still exposes its legacy flat fields. */
+/** A product returned by the silver get-all-prices endpoint. */
 export interface SilverAllPricesItem {
+  key: string;
+  name: string;
+  type: 'gram' | 'ounce' | string;
   currency: string;
-  sell_price: number;
-  buy_price: number;
-  spread_egp: number;
-  spread_percent: number;
+  price: {
+    buy: number;
+    sell: number;
+  };
+  spread: {
+    egp: number;
+    percent: number;
+  };
+  change: {
+    value: number | null;
+    percent: number | null;
+    color: 'red' | 'green' | 'gray' | null;
+  };
   chart_points: number[];
   chart_color: string;
-  recorded_at: string;
+  last_checked: {
+    last_checked_at: string | null;
+    last_checked_at_for_human: string | null;
+    live: boolean;
+  };
 }
