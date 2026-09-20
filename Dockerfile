@@ -17,8 +17,10 @@ COPY package.json package-lock.json ./
 # the build below — should be sensitive to them.
 RUN --mount=type=cache,target=/root/.npm npm ci
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ARG INTERNAL_API_URL=http://api:3001/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ENV INTERNAL_API_URL=$INTERNAL_API_URL
 COPY . .
 # Next's own incremental compiler cache, persisted the same way as npm's
