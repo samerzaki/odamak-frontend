@@ -1,71 +1,63 @@
-// React Query hooks for Portfolio API
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  fetchPortfolio,
   createPortfolioItem,
-  updatePortfolioItem,
   deletePortfolioItem,
-} from '@/lib/api-portfolio';
-import type {
-  CreatePortfolioItemRequest,
-  UpdatePortfolioItemRequest,
-} from '@/types/portfolio';
-import { REFRESH_INTERVAL } from '@/lib/constants';
+  fetchPortfolio,
+  fetchPortfolioOptions,
+  fetchPortfolioSummary,
+  updatePortfolioItem,
+} from "@/lib/api-portfolio";
+import type { CreatePortfolioItemRequest, UpdatePortfolioItemRequest } from "@/types/portfolio";
+import { REFRESH_INTERVAL } from "@/lib/constants";
 
-/**
- * Fetch all portfolio items with summary and counts.
- * Always fetches type=all so the frontend can filter client-side
- * while keeping summary/counts for the full portfolio.
- */
+const portfolioKey = ["asset-portfolio"];
+
 export function usePortfolio() {
   return useQuery({
-    queryKey: ['portfolio'],
-    queryFn: () => fetchPortfolio('all'),
+    queryKey: portfolioKey,
+    queryFn: () => fetchPortfolio(),
     refetchInterval: REFRESH_INTERVAL,
-    staleTime: 30000,
+    staleTime: 30_000,
   });
 }
 
-/**
- * Create a new portfolio item.
- * Invalidates the portfolio query on success.
- */
+export function usePortfolioSummary() {
+  return useQuery({
+    queryKey: [...portfolioKey, "summary"],
+    queryFn: fetchPortfolioSummary,
+    refetchInterval: REFRESH_INTERVAL,
+    staleTime: 30_000,
+  });
+}
+
+export function usePortfolioOptions(enabled = true) {
+  return useQuery({
+    queryKey: [...portfolioKey, "options"],
+    queryFn: fetchPortfolioOptions,
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
+function usePortfolioInvalidation() {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: portfolioKey });
+}
+
 export function useCreatePortfolioItem() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: CreatePortfolioItemRequest) => createPortfolioItem(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
-    },
-  });
+  const invalidate = usePortfolioInvalidation();
+  return useMutation({ mutationFn: (data: CreatePortfolioItemRequest) => createPortfolioItem(data), onSuccess: invalidate });
 }
 
-/**
- * Update an existing portfolio item.
- * Invalidates the portfolio query on success.
- */
 export function useUpdatePortfolioItem() {
-  const queryClient = useQueryClient();
+  const invalidate = usePortfolioInvalidation();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdatePortfolioItemRequest }) =>
-      updatePortfolioItem(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
-    },
+    mutationFn: ({ id, data }: { id: number; data: UpdatePortfolioItemRequest }) => updatePortfolioItem(id, data),
+    onSuccess: invalidate,
   });
 }
 
-/**
- * Delete a portfolio item.
- * Invalidates the portfolio query on success.
- */
 export function useDeletePortfolioItem() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => deletePortfolioItem(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
-    },
-  });
+  const invalidate = usePortfolioInvalidation();
+  return useMutation({ mutationFn: deletePortfolioItem, onSuccess: invalidate });
 }

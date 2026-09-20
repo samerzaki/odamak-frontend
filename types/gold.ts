@@ -1,11 +1,9 @@
 // Gold-related type definitions
 
-import type { SilverOverviewItem } from './silver';
-
 export type KaratCode = 'k24' | 'k21' | 'k18';
 
 // Extended to include all gold product types from API
-export type GoldProductType = '21' | '24' | '18' | 'gold_pound' | 'ounce';
+export type GoldProductType = '14' | '18' | '21' | '22' | '24' | 'gold_pound' | 'ounce';
 
 export interface Karat {
   id: number;
@@ -51,17 +49,18 @@ export interface GoldOverviewItem {
     buy: number;
     sell: number;
   };
-  spread: {
+  spread?: {
     egp: number;
     percent: number;
   };
   change: {
-    value: number;
-    percent: number;
-    color: 'red' | 'green';
+    value: number | null;
+    percent: number | null;
+    color: 'red' | 'green' | 'gray' | null;
   };
-  chart_points: number[];
-  chart_color: string;
+  chart_points_7d?: number[];
+  chart_points_30d?: number[];
+  chart_color?: string;
   last_checked: {
     last_checked_at: string;
     last_checked_at_for_human: string;
@@ -77,18 +76,13 @@ export interface GoldOverviewResponse {
   success: boolean;
   data: {
     gold: {
-      '21': GoldOverviewItem | null;
-      gold_pound: GoldOverviewItem | null;
-      '24': GoldOverviewItem | null;
+      '14': GoldOverviewItem | null;
       '18': GoldOverviewItem | null;
+      '21': GoldOverviewItem | null;
+      '22': GoldOverviewItem | null;
+      '24': GoldOverviewItem | null;
+      gold_pound: GoldOverviewItem | null;
       ounce: GoldOunceItem | null;
-    };
-    silver: {
-      '999_swiss': SilverOverviewItem | null;
-      '999_egyptian': SilverOverviewItem | null;
-      '925': SilverOverviewItem | null;
-      '800': SilverOverviewItem | null;
-      ounce: SilverOverviewItem | null;
     };
   };
 }

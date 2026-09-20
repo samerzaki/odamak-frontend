@@ -21,7 +21,7 @@ export function SegmentedControl({ items, value, onChange, otherItems, otherLabe
   const isOther = otherItems?.some((o) => o.value === value) ?? false;
 
   return (
-    <div className={cn('flex items-center gap-1.5 p-1 bg-panel2 border border-line rounded-xl w-fit', className)}>
+    <div className={cn('flex items-center gap-1.5 p-1 bg-panel-2 border border-line rounded-xl w-fit', className)}>
       {items.map((item) => {
         const active = item.value === value;
         return (

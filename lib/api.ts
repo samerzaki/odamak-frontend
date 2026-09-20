@@ -7,6 +7,7 @@ import {
   GoldHistoryResponse,
   CurrencyHighestPriceResponse,
   CurrencyAveragesResponse,
+  CurrencyOverviewResponse,
   CurrencyBanksResponse,
   NewsListResponse,
   NewsDetailResponse,
@@ -153,18 +154,16 @@ export async function fetchGoldHistory(
   return await response.json();
 }
 
-/**
- * Get highest buy price for currency
- * GET /api/currency/highest-buy-price?currency=USD
- *
- * @param currency - Currency code (e.g., USD, EUR)
- */
-export async function fetchHighestBuyPrice(
-  currency: string
-): Promise<CurrencyHighestPriceResponse> {
-  const params = new URLSearchParams({ currency });
-
-  const response = await fetch(`${API_BASE_URL}/currency/highest-buy-price?${params}`, {
+/** Get all currency summary values from the current overview API. */
+export async function fetchCurrencyOverview(
+  fromCurrency: string,
+  toCurrency: string = 'EGP'
+): Promise<CurrencyOverviewResponse> {
+  const params = new URLSearchParams({
+    from_currency: fromCurrency,
+    to_currency: toCurrency,
+  });
+  const response = await fetch(`${API_BASE_URL}/gold/currency/overview?${params.toString()}`, {
     headers: {
       'Accept': 'application/json',
       'Accept-Language': 'ar',
@@ -173,45 +172,56 @@ export async function fetchHighestBuyPrice(
 
   if (!response.ok) {
     if (response.status === 404) {
-      return { status: 404, success: false, data: null as any, meta: { message: 'No data found', currency } };
+      return { status: 404, success: false, data: null, meta: { message: 'No currency rates found' } };
     }
-    throw new Error('Failed to fetch highest buy price');
+    throw new Error('Failed to fetch currency overview');
   }
-
   return await response.json();
 }
 
-/**
- * Get highest sell price for currency
- * GET /api/currency/highest-sell-price?currency=USD
- *
- * @param currency - Currency code (e.g., USD, EUR)
- */
+/** Compatibility adapter for views that display the best rate for selling to a bank. */
+export async function fetchHighestBuyPrice(currency: string): Promise<CurrencyHighestPriceResponse> {
+  const overview = await fetchCurrencyOverview(currency);
+  const rate = overview.data?.highest_bank_to_sell_to;
+  return {
+    status: overview.status,
+    success: overview.success,
+    data: rate ? {
+      price: String(rate.price),
+      from_currency: overview.data!.from_currency,
+      to_currency: overview.data!.to_currency,
+      bank: rate.bank,
+      recorded_at: rate.last_update_at,
+      last_update_at: rate.last_update_at,
+    } : null as any,
+    meta: { message: overview.meta?.message ?? overview.message ?? 'Currency overview retrieved', currency },
+  };
+}
+
+/** Compatibility adapter for views that display the best rate for buying from a bank. */
 export async function fetchHighestSellPrice(
   currency: string
 ): Promise<CurrencyHighestPriceResponse> {
-  const params = new URLSearchParams({ currency });
-
-  const response = await fetch(`${API_BASE_URL}/currency/highest-sell-price?${params}`, {
-    headers: {
-      'Accept': 'application/json',
-      'Accept-Language': 'ar',
-    },
-  });
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      return { status: 404, success: false, data: null as any, meta: { message: 'No data found', currency } };
-    }
-    throw new Error('Failed to fetch highest sell price');
-  }
-
-  return await response.json();
+  const overview = await fetchCurrencyOverview(currency);
+  const rate = overview.data?.lowest_bank_to_buy_from;
+  return {
+    status: overview.status,
+    success: overview.success,
+    data: rate ? {
+      price: String(rate.price),
+      from_currency: overview.data!.from_currency,
+      to_currency: overview.data!.to_currency,
+      bank: rate.bank,
+      recorded_at: rate.last_update_at,
+      last_update_at: rate.last_update_at,
+    } : null as any,
+    meta: { message: overview.meta?.message ?? overview.message ?? 'Currency overview retrieved', currency },
+  };
 }
 
 /**
  * Get currency averages (banks + parallel market)
- * GET /api/currency/averages?from_currency=USD&to_currency=EGP
+ * Uses the combined GET /api/gold/currency/overview endpoint.
  *
  * @param fromCurrency - Source currency code
  * @param toCurrency - Target currency code (default: EGP)
@@ -220,30 +230,19 @@ export async function fetchCurrencyAverages(
   fromCurrency: string,
   toCurrency: string = 'EGP'
 ): Promise<CurrencyAveragesResponse> {
-  const params = new URLSearchParams({
-    from_currency: fromCurrency,
-    to_currency: toCurrency,
-  });
-
-  const response = await fetch(`${API_BASE_URL}/currency/averages?${params}`, {
-    headers: {
-      'Accept': 'application/json',
-      'Accept-Language': 'ar',
+  const overview = await fetchCurrencyOverview(fromCurrency, toCurrency);
+  const data = overview.data;
+  return {
+    status: overview.status,
+    success: overview.success,
+    data: {
+      from_currency: data?.from_currency ?? fromCurrency,
+      to_currency: data?.to_currency ?? toCurrency,
+      banks: { ...(data?.banks ?? { avg_buy_rate: 0, avg_sell_rate: 0, count: 0 }), last_update_at: '' },
+      parallel_market: { ...(data?.parallel_market ?? { avg_buy_rate: 0, avg_sell_rate: 0, count: 0 }), last_update_at: '' },
     },
-  });
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      return {
-        status: 404, success: false,
-        data: { from_currency: fromCurrency, to_currency: toCurrency, banks: { avg_buy_rate: 0, avg_sell_rate: 0, count: 0, last_update_at: '' }, parallel_market: { avg_buy_rate: 0, avg_sell_rate: 0, count: 0, last_update_at: '' } },
-        meta: { message: 'No data found' },
-      };
-    }
-    throw new Error('Failed to fetch currency averages');
-  }
-
-  return await response.json();
+    meta: { message: overview.meta?.message ?? overview.message ?? 'Currency overview retrieved' },
+  };
 }
 
 /**

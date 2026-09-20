@@ -1,75 +1,59 @@
-// Portfolio API functions - authenticated endpoints
-
-import { apiFetch, getAuthHeaders, ApiError } from './auth-utils';
-import { API_BASE_URL } from './constants';
+import { apiFetch, getAuthHeaders, ApiError } from "./auth-utils";
+import { API_BASE_URL } from "./constants";
 import type {
+  CreatePortfolioItemRequest,
   PortfolioIndexResponse,
   PortfolioItemResponse,
-  CreatePortfolioItemRequest,
+  PortfolioOptionsResponse,
+  PortfolioSummaryResponse,
   UpdatePortfolioItemRequest,
-} from '@/types/portfolio';
+} from "@/types/portfolio";
 
-/**
- * Fetch portfolio items with live valuations + summary
- * GET /api/asset-portfolio?type=all
- */
-export async function fetchPortfolio(
-  type: string = 'all'
-): Promise<PortfolioIndexResponse> {
-  return apiFetch<PortfolioIndexResponse>(`/asset-portfolio?type=${type}`);
+export async function fetchPortfolio(type?: string): Promise<PortfolioIndexResponse> {
+  const query = type && type !== "all" ? `?type=${encodeURIComponent(type)}` : "";
+  return apiFetch<PortfolioIndexResponse>(`/asset-portfolio${query}`);
 }
 
-/**
- * Create a new portfolio item
- * POST /api/asset-portfolio
- */
-export async function createPortfolioItem(
-  data: CreatePortfolioItemRequest
-): Promise<PortfolioItemResponse> {
-  return apiFetch<PortfolioItemResponse>('/asset-portfolio', {
-    method: 'POST',
+export async function fetchPortfolioSummary(): Promise<PortfolioSummaryResponse> {
+  return apiFetch<PortfolioSummaryResponse>("/asset-portfolio/summary");
+}
+
+export async function fetchPortfolioOptions(): Promise<PortfolioOptionsResponse> {
+  return apiFetch<PortfolioOptionsResponse>("/asset-portfolio/options");
+}
+
+export async function createPortfolioItem(data: CreatePortfolioItemRequest): Promise<PortfolioItemResponse> {
+  return apiFetch<PortfolioItemResponse>("/asset-portfolio", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-/**
- * Update an existing portfolio item
- * PUT /api/asset-portfolio/:id
- */
 export async function updatePortfolioItem(
   id: number,
   data: UpdatePortfolioItemRequest
 ): Promise<PortfolioItemResponse> {
   return apiFetch<PortfolioItemResponse>(`/asset-portfolio/${id}`, {
-    method: 'PUT',
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
-/**
- * Delete a portfolio item
- * DELETE /api/asset-portfolio/:id
- *
- * Handles both HTTP 204 (no body) and HTTP 200 (with body) responses.
- */
 export async function deletePortfolioItem(id: number): Promise<void> {
-  const headers = getAuthHeaders(false);
-
   const response = await fetch(`${API_BASE_URL}/asset-portfolio/${id}`, {
-    method: 'DELETE',
-    credentials: 'include',
-    headers,
+    method: "DELETE",
+    credentials: "include",
+    headers: getAuthHeaders(false),
   });
 
   if (!response.ok && response.status !== 204) {
-    let errorMessage = 'فشل حذف العنصر';
+    let message = "Unable to delete this asset.";
     try {
-      const errorData = await response.json();
-      if (errorData.error?.message) errorMessage = errorData.error.message;
-      else if (errorData.message) errorMessage = errorData.message;
+      const data = await response.json();
+      message = data.meta?.message ?? data.error?.message ?? data.message ?? message;
     } catch {
-      // not JSON
+      // The API may return an empty error response.
     }
-    throw new ApiError(errorMessage, response.status);
+    throw new ApiError(message, response.status);
   }
 }

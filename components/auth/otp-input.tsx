@@ -115,7 +115,7 @@ export function OTPInput({
             error
               ? "border-down focus:border-down"
               : "border-line focus:border-gold",
-            disabled && "opacity-50 cursor-not-allowed bg-panel2",
+            disabled && "opacity-50 cursor-not-allowed bg-panel-2",
             value[index] && !error && "border-gold"
           )}
         />

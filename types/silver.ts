@@ -9,7 +9,7 @@ export interface SilverOverviewItem {
     buy: number;
     sell: number;
   };
-  spread: {
+  spread?: {
     egp: number;
     percent: number;
   };
@@ -18,8 +18,9 @@ export interface SilverOverviewItem {
     percent: number | null;
     color: 'red' | 'green' | 'gray' | null;
   };
-  chart_points: number[];
-  chart_color: string;
+  chart_points_7d?: number[];
+  chart_points_30d?: number[];
+  chart_color?: string;
   last_checked: {
     last_checked_at: string | null;
     last_checked_at_for_human: string | null;
@@ -61,7 +62,7 @@ export interface SilverAllPricesItem {
     buy: number;
     sell: number;
   };
-  spread: {
+  spread?: {
     egp: number;
     percent: number;
   };
@@ -70,8 +71,9 @@ export interface SilverAllPricesItem {
     percent: number | null;
     color: 'red' | 'green' | 'gray' | null;
   };
-  chart_points: number[];
-  chart_color: string;
+  chart_points_7d?: number[];
+  chart_points_30d?: number[];
+  chart_color?: string;
   last_checked: {
     last_checked_at: string | null;
     last_checked_at_for_human: string | null;

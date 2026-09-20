@@ -57,7 +57,7 @@ interface HeroProps {
   karat21: GoldOverviewItem | null;
   lastCheckedAt?: string;
   lastCheckedAtForHuman?: string;
-  history30d: number[];
+  history7d: number[];
   rows: HeroKaratRow[];
 }
 
@@ -88,7 +88,7 @@ function LiveClock() {
   return <span className="num text-[13px] text-text">{time ?? '--:--:--'}</span>;
 }
 
-export function Hero({ karat21, lastCheckedAt, lastCheckedAtForHuman, history30d, rows }: HeroProps) {
+export function Hero({ karat21, lastCheckedAt, lastCheckedAtForHuman, history7d, rows }: HeroProps) {
   const { language, t } = useLanguage();
   const [alertOpen, setAlertOpen] = useState(false);
 
@@ -97,12 +97,14 @@ export function Hero({ karat21, lastCheckedAt, lastCheckedAtForHuman, history30d
   const currency = karat21?.currency ?? 'EGP';
   const changeValue = karat21?.change.value ?? 0;
   const changePercent = karat21?.change.percent ?? null;
-  const changeColor = karat21?.change.color;
+  const changeColor = karat21?.change.color === 'green' || karat21?.change.color === 'red'
+    ? karat21.change.color
+    : undefined;
   const heroChangeTooltip = getChangeTooltip(changePercent, changeColor, language);
   const recordedAt = karat21?.last_checked.last_checked_at ?? lastCheckedAt;
 
-  const validHistory = history30d.filter(Number.isFinite);
-  const move30d =
+  const validHistory = history7d.filter(Number.isFinite);
+  const move7d =
     validHistory.length >= 2 && validHistory[0] !== 0
       ? ((validHistory[validHistory.length - 1] - validHistory[0]) / validHistory[0]) * 100
       : null;
@@ -174,11 +176,11 @@ export function Hero({ karat21, lastCheckedAt, lastCheckedAtForHuman, history30d
             valueDirection={language === 'ar' ? 'rtl' : 'ltr'}
           />
           <div className="stat-tile flex-1 flex flex-col justify-between">
-            <div className="text-[11.5px] text-dim">{t.home2026.move30Days}</div>
+            <div className="text-[11.5px] text-dim">{language === 'ar' ? '7 أيام' : '7 Days'}</div>
             <div className="flex items-center gap-2 mt-2">
               {validHistory.length >= 2 && <Sparkline data={validHistory} tone="auto" width={50} height={18} />}
-              {move30d !== null ? (
-                <ChangeText value={move30d} withArrow={false} className="text-[14px]" />
+              {move7d !== null ? (
+                <ChangeText value={move7d} withArrow={false} className="text-[14px]" />
               ) : (
                 <span className="num text-[14px] text-dim">—</span>
               )}

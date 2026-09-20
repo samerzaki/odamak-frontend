@@ -1,4 +1,4 @@
-import { fetchGoldOverview, fetchGoldHistory } from '@/lib/api';
+import { fetchGoldOverview } from '@/lib/api';
 import { Hero, type HeroKaratRow } from './hero';
 import type { GoldOverviewItem } from '@/types';
 
@@ -14,14 +14,8 @@ const ROW_META: { dataKey: GoldKey; name: string }[] = [
 
 export async function HeroServer() {
   try {
-    const [overviewRes, historyRes] = await Promise.allSettled([
-      fetchGoldOverview(),
-      fetchGoldHistory('30d'),
-    ]);
-
-    if (overviewRes.status === 'rejected') throw overviewRes.reason;
-
-    const goldData = overviewRes.value.data?.gold;
+    const overview = await fetchGoldOverview();
+    const goldData = overview.data?.gold;
     const karat21 = goldData?.['21'] ?? null;
 
     const rows: HeroKaratRow[] = ROW_META.map((meta) => {
@@ -33,25 +27,20 @@ export async function HeroServer() {
         sellPrice: item.price.sell,
         currency: item.currency,
         changePercent: item.change.percent,
-        changeColor: item.change.color,
-        chartPoints: item.chart_points,
+        changeColor: item.change.color === 'green' || item.change.color === 'red' ? item.change.color : undefined,
+        chartPoints: item.chart_points_7d ?? [],
         lastCheckedAtForHuman: item.last_checked.last_checked_at_for_human,
         live: item.last_checked.live,
       };
       return row;
     }).filter((row): row is HeroKaratRow => row !== null);
 
-    const history30d =
-      historyRes.status === 'fulfilled'
-        ? (historyRes.value.data?.karat_21?.chart_points ?? []).map((p) => p.price)
-        : [];
-
     return (
       <Hero
         karat21={karat21}
         lastCheckedAt={karat21?.last_checked.last_checked_at}
         lastCheckedAtForHuman={karat21?.last_checked.last_checked_at_for_human}
-        history30d={history30d}
+        history7d={karat21?.chart_points_7d ?? []}
         rows={rows}
       />
     );

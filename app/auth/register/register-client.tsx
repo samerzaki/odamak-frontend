@@ -7,7 +7,11 @@ import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AuthCard } from "@/components/auth/auth-card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { SocialButtons } from "@/components/auth/social-buttons";
 import { PhoneInputField, type PhoneInputValue } from "@/components/ui/phone-input";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { checkEmailExists, sendOtp } from "@/lib/api-auth";
@@ -19,7 +23,6 @@ export default function RegisterPage() {
     lastName: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
   const [phoneData, setPhoneData] = useState<PhoneInputValue>({
     phone: "",
@@ -27,35 +30,29 @@ export default function RegisterPage() {
     country: null,
     inputValue: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [sendAlerts, setSendAlerts] = useState(true);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const router = useRouter();
   const { t, language } = useLanguage();
-  const isRTL = language === "ar";
   const handleTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
   const handleTurnstileExpire = useCallback(() => setTurnstileToken(""), []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!turnstileToken) {
-      setError(language === "ar" ? "يرجى إكمال التحقق الأمني" : "Please complete the security check.");
+      setError(t.common.securityCheckError);
       return;
     }
     setIsLoading(true);
-
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError(t.pages.register.errorPasswordMismatch);
-      setIsLoading(false);
-      return;
-    }
 
     // Validate password strength
     if (formData.password.length < 6) {
@@ -72,15 +69,19 @@ export default function RegisterPage() {
       }
 
       await sendOtp(formData.email);
-      sessionStorage.setItem("gold_pending_registration", JSON.stringify({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: phoneData.phone || undefined,
-        confirmPassword: formData.confirmPassword,
-        turnstileToken,
-      }));
+      sessionStorage.setItem(
+        "gold_pending_registration",
+        JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: phoneData.phone || undefined,
+          confirmPassword: formData.password,
+          sendAlerts,
+          turnstileToken,
+        })
+      );
       router.push(`/auth/verify-otp?email=${encodeURIComponent(formData.email)}&purpose=registration`);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.pages.register.errorDefault);
@@ -90,10 +91,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthCard appTitle={t.pages.register.appTitle} appSubtitle={t.pages.register.appSubtitle}>
-      <div className="text-center mb-6">
-        <h2 className="font-heading text-[18px] font-semibold text-text">{t.pages.register.title}</h2>
-        <p className="text-[13px] text-muted mt-1">{t.pages.register.subtitle}</p>
+    <AuthShell variant="register" title={t.pages.register.title} subtitle={t.pages.register.subtitle}>
+      <SocialButtons />
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-line-2" />
+        <span className="text-[12.5px] text-muted shrink-0">{t.pages.register.socialDivider}</span>
+        <div className="flex-1 h-px bg-line-2" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -108,7 +112,6 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
               disabled={isLoading}
-              className="w-full"
             />
           </div>
 
@@ -122,7 +125,6 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
               disabled={isLoading}
-              className="w-full"
             />
           </div>
         </div>
@@ -137,7 +139,7 @@ export default function RegisterPage() {
             onChange={handleChange}
             required
             disabled={isLoading}
-            className="w-full"
+            className="num"
           />
         </div>
 
@@ -151,66 +153,70 @@ export default function RegisterPage() {
             placeholder="+201234567890"
           />
           {phoneData.phone && phoneData.phone.length > 4 && !phoneData.isValid && (
-            <p className="text-[12px] text-muted">
-              {isRTL ? "يرجى إدخال رقم هاتف صحيح" : "Please enter a valid phone number"}
-            </p>
+            <p className="text-[12px] text-muted">{t.pages.register.phoneInvalid}</p>
           )}
           {phoneData.isValid && (
             <p className="text-[12px] text-up flex items-center gap-1">
               <CheckCircle className="h-3 w-3" />
-              {isRTL ? "رقم الهاتف صحيح" : "Phone number is valid"}
+              {t.pages.register.phoneValid}
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">{t.pages.register.passwordLabel}</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="password">{t.pages.register.passwordLabel}</Label>
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="text-[12.5px] font-semibold text-gold hover:underline"
+            >
+              {showPassword ? t.common.hide : t.common.show}
+            </button>
+          </div>
           <Input
             id="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder={t.pages.register.passwordPlaceholder}
             value={formData.password}
             onChange={handleChange}
             required
             disabled={isLoading}
-            className="w-full"
+            className="num"
           />
-          <p className="text-[12px] text-dim">{t.pages.register.passwordHint}</p>
+          {formData.password && (
+            <PasswordStrength
+              password={formData.password}
+              labels={[
+                t.pages.passwordStrength.empty,
+                t.pages.passwordStrength.weak,
+                t.pages.passwordStrength.fair,
+                t.pages.passwordStrength.strong,
+              ]}
+            />
+          )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">{t.pages.register.confirmPasswordLabel}</Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder={t.pages.register.confirmPasswordPlaceholder}
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            disabled={isLoading}
-            className="w-full"
-          />
-        </div>
+        <Checkbox checked={sendAlerts} onCheckedChange={setSendAlerts} label={t.pages.register.sendAlerts} disabled={isLoading} />
 
-        {error && (
-          <div className="p-3 text-[13px] text-down bg-down-soft rounded-[10px]">
-            {error}
-          </div>
-        )}
+        {error && <InlineAlert variant="error">{error}</InlineAlert>}
 
         <Button type="submit" className="w-full h-12" size="lg" disabled={isLoading}>
           {isLoading && <Loader2 className="animate-spin" />}
           {isLoading ? t.pages.register.submitting : t.pages.register.submitButton}
         </Button>
 
-        <Turnstile
-          onVerify={handleTurnstileVerify}
-          onExpire={handleTurnstileExpire}
-          language={language}
-        />
+        <Turnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} language={language} />
       </form>
 
-      <p className="mt-6 text-[12.5px] text-center text-dim leading-relaxed">
+      <div className="mt-6 text-center text-[13.5px] text-muted">
+        {t.pages.register.hasAccount}{" "}
+        <Link href="/auth/login" className="font-semibold text-gold hover:underline">
+          {t.pages.register.loginLink}
+        </Link>
+      </div>
+
+      <p className="mt-4 text-[12.5px] text-center text-dim leading-relaxed">
         {t.pages.register.termsText}{" "}
         <Link href="/terms" className="underline hover:text-gold">
           {t.pages.register.termsLink}
@@ -220,6 +226,6 @@ export default function RegisterPage() {
           {t.pages.register.privacyLink}
         </Link>
       </p>
-    </AuthCard>
+    </AuthShell>
   );
 }

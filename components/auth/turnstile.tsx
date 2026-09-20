@@ -66,11 +66,11 @@ export function Turnstile({ onVerify, onExpire, language = "ar" }: TurnstileProp
   }, [language, onExpire, onVerify, siteKey]);
 
   if (!siteKey) {
-    return <p className="text-sm text-red-600 dark:text-red-400">Cloudflare Turnstile is not configured.</p>;
+    return <p className="text-sm text-down">Cloudflare Turnstile is not configured.</p>;
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600 dark:text-red-400">Unable to load the security check. Please refresh and try again.</p>;
+    return <p className="text-sm text-down">Unable to load the security check. Please refresh and try again.</p>;
   }
 
   return <div ref={containerRef} className="flex justify-center" />;

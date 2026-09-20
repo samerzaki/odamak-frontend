@@ -1,26 +1,57 @@
 'use client';
 
-import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { useGoldHistory } from '@/hooks/use-gold-prices';
+import { useGoldOverview } from '@/hooks/use-gold-prices';
 import { UnifiedGoldChart } from './unified-gold-chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SectionCard } from '@/components/ui/section-card';
 import { useLanguage } from '@/contexts/language-context';
+import type { GoldHistoryResponse, GoldOverviewItem } from '@/types';
 
-type GoldPeriod = '24h' | '7d' | '30d' | '1y' | 'all';
+function toChartSeries(item: GoldOverviewItem | null) {
+  const points = item?.chart_points_30d ?? [];
+  const lastCheckedAt = item?.last_checked.last_checked_at;
+  const anchorDate = lastCheckedAt ? new Date(lastCheckedAt) : new Date();
+  const validAnchorDate = Number.isNaN(anchorDate.getTime()) ? new Date() : anchorDate;
+
+  return points.map((price, index) => {
+    const date = new Date(validAnchorDate);
+    date.setUTCDate(date.getUTCDate() - (points.length - 1 - index));
+    return { date: date.toISOString(), price };
+  });
+}
+
+function toGoldChartData(overview: Record<string, GoldOverviewItem | null>): GoldHistoryResponse['data'] {
+  const toKaratData = (item: GoldOverviewItem | null) => ({
+    currency: item?.currency ?? 'EGP',
+    sell_price: item?.price.sell ?? 0,
+    buy_price: item?.price.buy ?? 0,
+    spread_egp: item?.spread?.egp ?? 0,
+    spread_percent: item?.spread?.percent ?? 0,
+    chart_points: toChartSeries(item),
+    chart_color: item?.chart_color ?? 'gray',
+    recorded_at: item?.last_checked.last_checked_at ?? '',
+  });
+
+  return {
+    period: '30d',
+    currency: 'EGP',
+    karat_24: toKaratData(overview['24'] ?? null),
+    karat_21: toKaratData(overview['21'] ?? null),
+    karat_18: toKaratData(overview['18'] ?? null),
+  };
+}
 
 export function UnifiedGoldChartServer() {
   const { t } = useLanguage();
-  const [period, setPeriod] = useState<GoldPeriod>('30d');
-  const { data: historyData, isLoading, isFetching, error } = useGoldHistory(period, 'EGP');
+  const { data: overviewData, isLoading, error } = useGoldOverview();
 
   // First load only — show full skeleton
-  if (isLoading && !historyData) {
+  if (isLoading && !overviewData) {
     return <UnifiedGoldChartSkeleton />;
   }
 
-  if (error && !historyData) {
+  if (error && !overviewData) {
     return (
       <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
         <div className="flex items-center gap-3">
@@ -38,17 +69,15 @@ export function UnifiedGoldChartServer() {
     );
   }
 
-  if (!historyData?.data) {
+  if (!overviewData?.data.gold) {
     return null;
   }
 
   return (
     <SectionCard>
       <UnifiedGoldChart
-        data={historyData.data}
-        period={period}
-        onPeriodChange={setPeriod}
-        isLoading={isFetching}
+        data={toGoldChartData(overviewData.data.gold)}
+        period="30d"
       />
     </SectionCard>
   );

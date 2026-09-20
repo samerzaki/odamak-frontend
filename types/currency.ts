@@ -52,6 +52,46 @@ export interface GoldCalculateResponse {
 }
 
 // Currency Highest Buy/Sell Price Types
+export interface CurrencyOverviewBank {
+  id: number;
+  code: string;
+  name: { en: string; ar: string };
+  bank_logo_url: string;
+}
+
+export interface CurrencyOverviewRate {
+  price: number | string;
+  bank: CurrencyOverviewBank;
+  last_update_at: string;
+}
+
+export interface CurrencyOverviewResponse {
+  status: number;
+  success: boolean;
+  data: {
+    from_currency: string;
+    to_currency: string;
+    highest_bank_to_sell_to: CurrencyOverviewRate | null;
+    lowest_bank_to_buy_from: CurrencyOverviewRate | null;
+    banks: {
+      avg_buy_rate: number;
+      avg_sell_rate: number;
+      count: number;
+    };
+    parallel_market: {
+      avg_buy_rate: number;
+      avg_sell_rate: number;
+      count: number;
+    };
+    bank_vs_parallel_market: {
+      buy_rate_difference: number;
+      sell_rate_difference: number;
+    };
+  } | null;
+  meta?: { message: string };
+  message?: string;
+}
+
 export interface CurrencyHighestPriceResponse {
   status: number;
   success: boolean;

@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
-import { AuthCard } from "@/components/auth/auth-card";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { OTPInput } from "@/components/auth/otp-input";
-import { verifyEmail, sendOtp, verifyTempMobileNumber, sendMobileOtp, changeEmail } from "@/lib/api-auth";
+import { verifyEmail, sendOtp, verifyTempMobileNumber, sendMobileOtp } from "@/lib/api-auth";
 import { useAuth, type RegisterData } from "@/contexts/auth-context";
 import { RefreshCw, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 
@@ -70,14 +71,11 @@ function VerifyOTPContent() {
         sessionStorage.removeItem("gold_pending_registration");
       }
 
-      if (purpose === "email-change") {
-        await changeEmail({ email, verification_code: otpValue });
-      }
       setIsVerified(true);
 
       // Redirect after verification
       setTimeout(() => {
-        if (purpose === "email-change" || isMobilePurpose) {
+        if (isMobilePurpose) {
           router.push("/me/settings");
         } else {
           router.push("/");
@@ -116,7 +114,7 @@ function VerifyOTPContent() {
   // If OTP verified
   if (isVerified) {
     return (
-      <AuthCard appTitle={t.common.appName} showTabs={false}>
+      <AuthShell showTabs={false}>
         <div className="text-center">
           <div className="mx-auto w-14 h-14 bg-up-soft rounded-full flex items-center justify-center mb-4">
             <CheckCircle className="w-7 h-7 text-up" />
@@ -126,13 +124,13 @@ function VerifyOTPContent() {
           </h2>
           <p className="text-[13px] text-muted">{t.pages.verifyOtp.successRedirect}</p>
         </div>
-      </AuthCard>
+      </AuthShell>
     );
   }
 
   // OTP entry form
   return (
-    <AuthCard appTitle={t.common.appName} appSubtitle={t.pages.login.appSubtitle} showTabs={false}>
+    <AuthShell showTabs={false}>
       <div className="text-center mb-6">
         <h2 className="font-heading text-[18px] font-semibold text-text">{t.pages.verifyOtp.title}</h2>
         <p className="text-[13px] text-muted mt-1">
@@ -155,11 +153,7 @@ function VerifyOTPContent() {
             autoFocus
           />
 
-          {error && (
-            <div className="p-3 text-[13px] text-down bg-down-soft rounded-[10px] text-center">
-              {error}
-            </div>
-          )}
+          {error && <InlineAlert variant="error" className="justify-center text-center">{error}</InlineAlert>}
 
           <div className="text-center">
             <p className="text-[12px] text-dim mb-2">{t.pages.verifyOtp.noCode}</p>
@@ -179,7 +173,7 @@ function VerifyOTPContent() {
           </div>
 
           {purpose === "registration" && (
-            <div className="text-center pt-4 border-t border-line2">
+            <div className="text-center pt-4 border-t border-line-2">
               <Button
                 type="button"
                 variant="outline"
@@ -202,7 +196,7 @@ function VerifyOTPContent() {
           {t.pages.verifyOtp.backToLogin}
         </Link>
       </div>
-    </AuthCard>
+    </AuthShell>
   );
 }
 

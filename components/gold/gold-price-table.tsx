@@ -7,13 +7,15 @@ import { translations, type Language } from '@/lib/translations';
 import { useEffect, useState } from 'react';
 import type { ModernGoldDataItem } from '@/components/dashboard/modern-gold-prices-server';
 
-const ROW_ORDER: ModernGoldDataItem['nameKey'][] = ['karat24', 'karat21', 'karat18', 'pound', 'ounce'];
+const ROW_ORDER: ModernGoldDataItem['nameKey'][] = ['karat21', 'karat24', 'karat18', 'karat14', 'pound'];
 
 function getName(nameKey: string, t: any) {
   const names: Record<string, string> = {
     karat24: t.gold.karat24,
+    karat22: 'Gold 22K',
     karat21: t.gold.karat21,
     karat18: t.gold.karat18,
+    karat14: 'Gold 14K',
     pound: t.gold.pound,
     ounce: t.gold.ounce,
   };

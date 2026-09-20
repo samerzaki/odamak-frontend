@@ -1,1014 +1,251 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import {
-  Wallet,
-  Eye,
-  EyeOff,
-  TrendingUp,
-  TrendingDown,
-  Plus,
-  Edit,
-  Trash2,
-  MoreVertical,
-  Coins,
-  Flag,
-  X,
-  Activity,
-  Gem,
-  Loader2,
-} from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  Tooltip as RechartsTooltip,
-} from "recharts";
+import { useMemo, useState } from "react";
+import { Coins, Gem, Landmark, Bitcoin, Plus, Wallet } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { cn } from "@/lib/utils";
-import { formatPrice, formatRelativeTime } from "@/lib/format";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { formatDateTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Sparkline } from "@/components/currency/sparkline";
-import { ApiError } from "@/components/ui/api-error";
 import { PageHeader } from "@/components/ui/page-header";
-import { SectionCard } from "@/components/ui/section-card";
-import { StatTile } from "@/components/ui/stat-tile";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ApiError } from "@/components/ui/api-error";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-  usePortfolio,
-  useCreatePortfolioItem,
-  useUpdatePortfolioItem,
   useDeletePortfolioItem,
+  usePortfolio,
+  usePortfolioOptions,
+  usePortfolioSummary,
 } from "@/hooks/use-portfolio";
-import type {
-  PortfolioItem,
-  PortfolioAssetType,
-  PortfolioFilterType,
-  CreatePortfolioItemRequest,
-} from "@/types/portfolio";
+import { PortfolioHero } from "@/components/portfolio/portfolio-hero";
+import { AllocationDonut } from "@/components/portfolio/allocation-donut";
+import { BreakdownCards } from "@/components/portfolio/breakdown-cards";
+import { AssetCard } from "@/components/portfolio/asset-card";
+import { AssetTable } from "@/components/portfolio/asset-table";
+import { AssetDrawer } from "@/components/portfolio/asset-drawer";
+import { CATEGORY_META, numberValue } from "@/components/portfolio/portfolio-meta";
+import type { PortfolioAssetType, PortfolioFilterType, PortfolioItem } from "@/types/portfolio";
 
-// Consistent select styling to match the Input component
-const selectClassName =
-  "flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300";
-
-const ALLOCATION_COLORS: Record<string, string> = {
-  gold: "var(--primary)",
-  silver: "#94a3b8",  // slate-400
-  currency: "#64748b", // slate-500
-};
-
-// Generate mock sparkline data showing price trend (until backend provides chart_points)
-function generateSparklineData(
-  buyPrice: number,
-  currentPrice: number
-): number[] {
-  const points = 10;
-  const data: number[] = [];
-  const diff = currentPrice - buyPrice;
-  for (let i = 0; i < points; i++) {
-    const progress = i / (points - 1);
-    const base = buyPrice + diff * progress;
-    const noise = (Math.random() - 0.5) * Math.abs(diff) * 0.1;
-    data.push(base + noise);
-  }
-  return data;
-}
-
-// Allocation chart custom tooltip
-function AllocationTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; value: number; percentage: number } }> }) {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="rounded-lg border bg-background p-3 shadow-lg text-start">
-        <p className="font-semibold text-sm mb-1">{data.name}</p>
-        <p className="text-xs text-muted-foreground">
-          {formatPrice(data.value)} ج.م
-        </p>
-        <p className="text-xs font-medium">{data.percentage.toFixed(1)}%</p>
-      </div>
-    );
-  }
-  return null;
-}
-
-// Type icon helper
-function AssetIcon({ type, className }: { type: PortfolioAssetType; className?: string }) {
-  switch (type) {
-    case "gold":
-      return <Coins className={cn("text-primary", className)} />;
-    case "silver":
-      return <Gem className={cn("text-slate-400", className)} />;
-    case "currency":
-      return <Flag className={cn("text-muted-foreground", className)} />;
-  }
-}
+const FILTER_TYPES: PortfolioFilterType[] = ["all", "gold", "silver", "currency", "crypto"];
+const QUICK_ADD_ICONS: Record<PortfolioAssetType, typeof Coins> = { gold: Coins, silver: Gem, currency: Landmark, crypto: Bitcoin };
 
 export default function PortfolioPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const tp = t.pages.portfolio;
+
   const [isHidden, setIsHidden] = useState(false);
   const [filter, setFilter] = useState<PortfolioFilterType>("all");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [view, setView] = useState<"cards" | "table">("cards");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
+  const [drawerInitialType, setDrawerInitialType] = useState<PortfolioAssetType>("gold");
+  const [deleteTarget, setDeleteTarget] = useState<PortfolioItem | null>(null);
 
-  // Stable sparkline data (generated once per item via ref)
-  const sparklineCache = useRef<Record<number, number[]>>({});
-
-  // API data
-  const { data: portfolioData, isLoading, error, refetch } = usePortfolio();
+  const portfolio = usePortfolio();
+  const summaryQuery = usePortfolioSummary();
+  const optionsQuery = usePortfolioOptions();
   const deleteMutation = useDeletePortfolioItem();
 
-  const items = portfolioData?.data ?? [];
-  const summary = portfolioData?.meta?.summary;
-  const counts = portfolioData?.meta?.counts;
+  const items = useMemo(() => portfolio.data?.data ?? [], [portfolio.data]);
+  const summary = summaryQuery.data?.data;
 
-  // Get or create stable sparkline data for an item
-  const getSparklineData = (item: PortfolioItem): number[] => {
-    if (!sparklineCache.current[item.id]) {
-      sparklineCache.current[item.id] = generateSparklineData(
-        item.buy_price,
-        item.current_price
-      );
-    }
-    return sparklineCache.current[item.id];
-  };
+  const counts = useMemo(
+    () => ({
+      all: items.length,
+      gold: items.filter((i) => i.type === "gold").length,
+      silver: items.filter((i) => i.type === "silver").length,
+      currency: items.filter((i) => i.type === "currency").length,
+      crypto: items.filter((i) => i.type === "crypto").length,
+    }),
+    [items]
+  );
+  const visibleItems = filter === "all" ? items : items.filter((i) => i.type === filter);
 
-  // Mock portfolio history for the mini area chart
-  const portfolioHistory = useMemo(() => {
-    if (!summary || summary.total_current_value === 0) return [];
-    const total = summary.total_current_value;
-    const cost = summary.total_cost_basis;
-    const points = 12;
-    const diff = total - cost;
-    return Array.from({ length: points }, (_, i) => {
-      const progress = i / (points - 1);
-      const base = cost + diff * progress;
-      const noise = (Math.random() - 0.5) * Math.abs(diff) * 0.05;
-      return { value: Math.max(0, base + noise) };
-    });
-  }, [summary?.total_current_value, summary?.total_cost_basis]);
-
-  // Allocation data for pie chart (from API)
-  const allocationData = useMemo(() => {
-    if (!summary) return [];
-    const alloc = summary.allocation;
-    const labelMap: Record<string, string> = {
-      gold: t.pages.portfolio.gold,
-      silver: "فضة",
-      currency: t.pages.portfolio.currencies,
-    };
-    return Object.entries(alloc)
-      .filter(([, v]) => v.value > 0)
-      .map(([key, v]) => ({
-        name: labelMap[key] || key,
-        value: v.value,
-        percentage: v.percentage,
-        color: ALLOCATION_COLORS[key] || "#94a3b8",
-      }));
-  }, [summary, t]);
-
-  // Filter items client-side
-  const filteredItems = useMemo(() => {
-    if (filter === "all") return items;
-    return items.filter((item) => item.type === filter);
-  }, [items, filter]);
-
-  // Handlers
-  const handleDelete = (id: number) => {
-    sparklineCache.current = {};
-    deleteMutation.mutate(id);
-  };
-
-  const handleEdit = (item: PortfolioItem) => {
-    setEditingItem(item);
-    setIsAddModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setIsAddModalOpen(false);
+  const openCreate = (type: PortfolioAssetType = "gold") => {
     setEditingItem(null);
-    sparklineCache.current = {};
+    setDrawerInitialType(type);
+    setDrawerOpen(true);
+  };
+  const openEdit = (item: PortfolioItem) => {
+    setEditingItem(item);
+    setDrawerOpen(true);
+  };
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteMutation.mutateAsync(deleteTarget.id);
+    setDeleteTarget(null);
   };
 
-  const isProfit = (summary?.total_profit_loss ?? 0) >= 0;
-
-  // Loading state
-  if (isLoading) {
+  if (portfolio.isLoading || summaryQuery.isLoading) {
     return (
-      <div className="space-y-4 pb-24">
-        <PageHeader title={t.pages.portfolio.title} lead={t.pages.portfolio.subtitle} />
-        {/* Hero skeleton */}
-        <div className="rounded-lg border p-6">
-          <div className="h-6 w-32 bg-muted rounded animate-pulse mb-4" />
-          <div className="h-12 w-48 bg-muted rounded animate-pulse mb-3" />
-          <div className="h-6 w-24 bg-muted rounded-full animate-pulse" />
-        </div>
-        {/* Stats skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+      <div className="space-y-5 pb-10">
+        <PageHeader title={tp.title} lead={tp.subtitle} />
+        <Skeleton className="h-[210px] w-full rounded-[20px]" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-lg border p-3">
-              <div className="h-8 w-8 bg-muted rounded-lg animate-pulse mb-2" />
-              <div className="h-4 w-16 bg-muted rounded animate-pulse mb-1" />
-              <div className="h-6 w-12 bg-muted rounded animate-pulse" />
-            </div>
-          ))}
-        </div>
-        {/* Cards skeleton */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-lg border p-3">
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="h-7 w-7 bg-muted rounded-md animate-pulse" />
-                <div className="h-4 w-20 bg-muted rounded animate-pulse" />
-              </div>
-              <div className="h-5 w-16 bg-muted rounded animate-pulse mb-1" />
-              <div className="h-3 w-24 bg-muted rounded animate-pulse" />
-            </div>
+            <Skeleton key={i} className="h-[120px] rounded-[16px]" />
           ))}
         </div>
       </div>
     );
   }
 
-  // Error state
-  if (error) {
+  if (portfolio.error || summaryQuery.error) {
     return (
-      <div className="pb-24">
-        <PageHeader title={t.pages.portfolio.title} lead={t.pages.portfolio.subtitle} />
-        <div className="py-12">
-          <ApiError error={error} retry={refetch} />
-        </div>
+      <div className="space-y-5 pb-10">
+        <PageHeader title={tp.title} lead={tp.subtitle} />
+        <ApiError
+          error={(portfolio.error ?? summaryQuery.error)!}
+          retry={() => {
+            void portfolio.refetch();
+            void summaryQuery.refetch();
+          }}
+        />
       </div>
     );
   }
+
+  const totalValue = numberValue(summary?.total_current_value);
+  const purchaseValue = numberValue(summary?.total_purchase_value);
+  const profit = numberValue(summary?.total_profit_loss);
+  const profitPercent = numberValue(summary?.total_profit_loss_percent);
+  const pricedCount = items.filter((i) => numberValue(i.purchase_value) !== null).length;
+
+  const breakdownEntries = summary
+    ? (["gold", "silver", "currencies", "crypto"] as const).map((key) => ({ key, item: summary.breakdown[key] }))
+    : [];
+  const best = breakdownEntries
+    .filter(({ item }) => {
+      const cost = numberValue(item.purchase_value);
+      return cost !== null && cost !== 0;
+    })
+    .sort((a, b) => (numberValue(b.item.profit_loss_percent) ?? -Infinity) - (numberValue(a.item.profit_loss_percent) ?? -Infinity))[0];
+  const bestCategoryLabel = best ? tp[best.key] : null;
+
+  const isEmpty = items.length === 0;
 
   return (
-    <div className="space-y-4 pb-24">
-      <PageHeader title={t.pages.portfolio.title} lead={t.pages.portfolio.subtitle} />
-      {/* ═══════════════════════════════════════════════════════
-          Section 1 + 3: Hero Card + Asset Allocation (same row)
-          ═══════════════════════════════════════════════════════ */}
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500",
-          allocationData.length > 0 ? "md:grid-cols-5" : ""
-        )}
-      >
-        {/* Hero Card - Total Wealth */}
-        <Card className={cn(
-          "relative overflow-hidden",
-          allocationData.length > 0 ? "md:col-span-3" : ""
-        )}>
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-transparent dark:from-primary-950/20 dark:to-transparent" />
+    <div className="space-y-5 pb-10">
+      <PageHeader
+        title={tp.title}
+        lead={`${tp.subtitle} · ${tp.lastUpdated} ${formatDateTime(portfolio.dataUpdatedAt ? new Date(portfolio.dataUpdatedAt) : null, language)}`}
+        actions={
+          <Button onClick={() => openCreate()} className="gap-1.5">
+            <Plus className="h-4 w-4" />
+            {tp.addAsset}
+          </Button>
+        }
+      />
 
-          <CardContent className="relative p-5 md:p-6 h-full flex flex-col">
-            {/* Top row: Label + Privacy toggle */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Wallet className="h-4 w-4 text-primary" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {t.pages.portfolio.totalWealth}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsHidden(!isHidden)}
-                className="h-8 w-8"
-                aria-label={isHidden ? "إظهار الأرقام" : "إخفاء الأرقام"}
-              >
-                {isHidden ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-
-            {/* Total value */}
-            <div className={cn("mb-3", isHidden && "blur-md select-none")}>
-              <p className="num text-4xl md:text-5xl font-bold mb-1">
-                {formatPrice(summary?.total_current_value ?? 0)}
-              </p>
-              <span className="text-sm text-muted-foreground">
-                {t.common.egp}
-              </span>
-            </div>
-
-            {/* Profit/Loss pill */}
-            <div
-              className={cn(
-                "num inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold mb-4",
-                isProfit
-                  ? "bg-up-soft text-up"
-                  : "bg-down-soft text-down",
-                isHidden && "blur-md select-none"
-              )}
-            >
-              {isProfit ? (
-                <TrendingUp className="h-4 w-4" />
-              ) : (
-                <TrendingDown className="h-4 w-4" />
-              )}
-              <span>{formatPrice(summary?.total_profit_loss ?? 0)}</span>
-              <span className="opacity-70">
-                ({(summary?.profit_loss_percent ?? 0) >= 0 ? "+" : ""}
-                {(summary?.profit_loss_percent ?? 0).toFixed(2)}%)
-              </span>
-            </div>
-
-            {/* Mini portfolio performance chart */}
-            {portfolioHistory.length > 0 && (
-              <div className={cn("h-16 md:h-20 mt-auto", isHidden && "blur-md")}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={portfolioHistory}>
-                    <defs>
-                      <linearGradient
-                        id="portfolioGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor={isProfit ? "#16a34a" : "#dc2626"}
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor={isProfit ? "#16a34a" : "#dc2626"}
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke={isProfit ? "#16a34a" : "#dc2626"}
-                      fill="url(#portfolioGradient)"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-
-            {/* Last updated */}
-            <p className="text-xs text-muted-foreground mt-3">
-              آخر تحديث: {formatRelativeTime(new Date())}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Asset Allocation (PieChart) */}
-        {allocationData.length > 0 && (
-          <Card className="md:col-span-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t.pages.portfolio.assetDistribution}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              {/* Pie Chart */}
-              <div
-                className={cn(
-                  "w-full",
-                  isHidden && "blur-md select-none"
-                )}
-              >
-                <ResponsiveContainer width="100%" height={170}>
-                  <PieChart>
-                    <Pie
-                      data={allocationData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={72}
-                      paddingAngle={4}
-                      dataKey="value"
-                      animationBegin={0}
-                      animationDuration={800}
-                    >
-                      {allocationData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.color}
-                          className="hover:opacity-80 transition-opacity cursor-pointer"
-                        />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip content={<AllocationTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Legend */}
-              <div className="w-full space-y-3">
-                {allocationData.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="h-3 w-3 rounded-full shrink-0"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-sm font-medium">{item.name}</span>
-                    </div>
-                    <div className="text-end">
-                      <p
-                        className={cn(
-                          "num text-sm font-bold",
-                          isHidden && "blur-sm"
-                        )}
-                      >
-                        {item.percentage.toFixed(1)}%
-                      </p>
-                      <p
-                        className={cn(
-                          "num text-xs text-muted-foreground",
-                          isHidden && "blur-sm"
-                        )}
-                      >
-                        {formatPrice(item.value)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════
-          Section 2: Quick Stats Row
-          ═══════════════════════════════════════════════════════ */}
-      {items.length > 0 && summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 animate-in fade-in-50 slide-in-from-bottom-4 duration-500 delay-100">
-          {/* Total Assets */}
-          <StatTile
-            label="إجمالي الأصول"
-            value={counts?.all ?? items.length}
-          />
-
-          {/* Best Performer */}
-          <StatTile
-            label={summary.best_performer?.name ?? "—"}
-            value={
-              <span className={cn("text-up", isHidden && "blur-sm")}>
-                {summary.best_performer
-                  ? `+${summary.best_performer.profit_loss_percent.toFixed(1)}%`
-                  : "—"}
-              </span>
-            }
-          />
-
-          {/* Worst Performer */}
-          <StatTile
-            label={summary.worst_performer?.name ?? "—"}
-            value={
-              <span className={cn("text-down", isHidden && "blur-sm")}>
-                {summary.worst_performer
-                  ? `${summary.worst_performer.profit_loss_percent.toFixed(1)}%`
-                  : "—"}
-              </span>
-            }
-          />
-
-          {/* Overall Change */}
-          <StatTile
-            label="إجمالي التغير"
-            value={
-              <span
-                className={cn(
-                  isProfit ? "text-up" : "text-down",
-                  isHidden && "blur-sm"
-                )}
-              >
-                {(summary.profit_loss_percent ?? 0) >= 0 ? "+" : ""}
-                {(summary.profit_loss_percent ?? 0).toFixed(2)}%
-              </span>
-            }
-          />
+      {isEmpty ? (
+        <div className="card-surface rounded-[20px] py-16 px-6 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[20px] bg-gold-soft">
+            <Wallet className="h-6 w-6 text-gold" />
+          </div>
+          <div className="text-[19px] font-bold text-text">{tp.emptyTitle}</div>
+          <p className="mx-auto mt-2 max-w-[440px] text-[13.5px] text-muted leading-relaxed">{tp.emptyDescription}</p>
+          <div className="flex justify-center gap-2 flex-wrap mt-5">
+            {(["gold", "silver", "currency", "crypto"] as PortfolioAssetType[]).map((type) => {
+              const Icon = QUICK_ADD_ICONS[type];
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => openCreate(type)}
+                  className="inline-flex items-center gap-2 rounded-[12px] border border-line bg-panel px-4 py-2.5 text-[13.5px] font-semibold text-text hover:border-gold hover:bg-hover"
+                >
+                  <Icon className={cn("h-4 w-4", CATEGORY_META[type].text)} />
+                  {tp[type === "currency" ? "currencies" : type]}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
+      ) : (
+        <>
+          <div className="grid gap-4 lg:grid-cols-[1.3fr_.7fr]">
+            <PortfolioHero
+              totalValue={totalValue}
+              assetsCount={items.length}
+              profit={profit}
+              profitPercent={profitPercent}
+              purchaseValue={purchaseValue}
+              pricedCount={pricedCount}
+              bestCategoryLabel={bestCategoryLabel}
+              isHidden={isHidden}
+              onToggleHidden={() => setIsHidden((v) => !v)}
+            />
+            <AllocationDonut breakdown={summary?.breakdown} allocation={summary?.allocation} isHidden={isHidden} />
+          </div>
 
-      {/* ═══════════════════════════════════════════════════════
-          Section 4: Filter Tabs + Asset Cards
-          ═══════════════════════════════════════════════════════ */}
-      <Tabs
-        defaultValue="all"
-        value={filter}
-        onValueChange={(v) => setFilter(v as PortfolioFilterType)}
-        className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 delay-300"
-      >
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all" className="gap-1.5">
-            <Wallet className="h-3.5 w-3.5" />
-            <span>{t.pages.portfolio.all}</span>
-            <Badge variant="secondary" className="ms-1 text-[10px] px-1.5">
-              {counts?.all ?? items.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="gold" className="gap-1.5">
-            <Coins className="h-3.5 w-3.5" />
-            <span>{t.pages.portfolio.gold}</span>
-            <Badge variant="secondary" className="ms-1 text-[10px] px-1.5">
-              {counts?.gold ?? 0}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="silver" className="gap-1.5">
-            <Gem className="h-3.5 w-3.5" />
-            <span>فضة</span>
-            <Badge variant="secondary" className="ms-1 text-[10px] px-1.5">
-              {counts?.silver ?? 0}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="currency" className="gap-1.5">
-            <Flag className="h-3.5 w-3.5" />
-            <span>{t.pages.portfolio.currencies}</span>
-            <Badge variant="secondary" className="ms-1 text-[10px] px-1.5">
-              {counts?.currency ?? 0}
-            </Badge>
-          </TabsTrigger>
-        </TabsList>
+          <BreakdownCards breakdown={summary?.breakdown} totalValue={totalValue} isHidden={isHidden} />
 
-        <TabsContent value={filter} className="mt-4">
-          {filteredItems.length === 0 ? (
-            <div className="py-12 text-center">
-              <Wallet className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="font-semibold mb-1">
-                {t.pages.portfolio.noAssets}
-              </p>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t.pages.portfolio.noAssetsDescription}
-              </p>
-              <Button
-                onClick={() => {
-                  setEditingItem(null);
-                  setIsAddModalOpen(true);
-                }}
-              >
-                <Plus className="h-4 w-4 me-2" />
-                {t.pages.portfolio.recordBuy}
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
-              {filteredItems.map((item, index) => {
-                const sparkData = getSparklineData(item);
-                const itemIsProfit = item.profit_loss >= 0;
-
+          <div className="flex items-center gap-2.5 flex-wrap mt-2">
+            <h2 className="font-heading text-[17px] font-semibold text-text">{tp.myAssets}</h2>
+            <div className="flex-1" />
+            <div className="flex gap-1.5 flex-wrap">
+              {FILTER_TYPES.map((f) => {
+                const active = filter === f;
                 return (
-                  <Card
-                    key={item.id}
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setFilter(f)}
                     className={cn(
-                      "relative group transition-all duration-300",
-                      "hover:shadow-lg hover:-translate-y-0.5",
-                      "border hover:border-primary/20",
-                      "animate-in fade-in-50 slide-in-from-bottom-4"
+                      "rounded-full px-3 py-1.5 text-[12.5px] font-semibold border transition-colors",
+                      active ? "bg-inv-bg text-inv-text border-inv-bg" : "bg-panel text-muted border-line hover:border-gold hover:text-gold"
                     )}
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                      animationDuration: "400ms",
-                    }}
                   >
-                    {/* Edit/Delete Menu - shows on hover */}
-                    <div className="absolute top-1.5 end-1.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 bg-background/80 backdrop-blur-sm hover:bg-background"
-                          >
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" sideOffset={4}>
-                          <DropdownMenuItem
-                            onClick={() => handleEdit(item)}
-                          >
-                            <Edit className="h-4 w-4 me-2" />
-                            {t.pages.portfolio.edit}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(item.id)}
-                            className="text-destructive"
-                            disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4 me-2" />
-                            {t.pages.portfolio.delete}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    <CardContent className="p-3">
-                      {/* Header: Icon + Name */}
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <div
-                          className={cn(
-                            "flex items-center justify-center rounded-md shrink-0 h-7 w-7",
-                            item.type === "gold"
-                              ? "bg-primary-50 dark:bg-primary-950/20"
-                              : item.type === "silver"
-                              ? "bg-slate-100 dark:bg-slate-800/50"
-                              : "bg-muted"
-                          )}
-                        >
-                          <AssetIcon type={item.type} className="h-3.5 w-3.5" />
-                        </div>
-                        <h3 className="font-semibold text-xs truncate flex-1 min-w-0">
-                          {item.name}
-                        </h3>
-                      </div>
-
-                      {/* Current Value */}
-                      <p
-                        className={cn(
-                          "num text-base font-bold mb-1",
-                          isHidden && "blur-md select-none"
-                        )}
-                      >
-                        {formatPrice(item.current_value)}
-                      </p>
-
-                      {/* Buy price (compact) */}
-                      <p
-                        className={cn(
-                          "num text-[10px] text-muted-foreground mb-2",
-                          isHidden && "blur-sm select-none"
-                        )}
-                      >
-                        {t.pages.portfolio.buyPrice ?? "الشراء"}: {formatPrice(item.buy_price)}
-                      </p>
-
-                      {/* Profit/Loss pill + sparkline row */}
-                      <div className="flex items-end justify-between gap-1">
-                        <div
-                          className={cn(
-                            "num inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-tight",
-                            itemIsProfit
-                              ? "bg-up-soft text-up"
-                              : "bg-down-soft text-down",
-                            isHidden && "blur-sm select-none"
-                          )}
-                        >
-                          {itemIsProfit ? (
-                            <TrendingUp className="h-2.5 w-2.5" />
-                          ) : (
-                            <TrendingDown className="h-2.5 w-2.5" />
-                          )}
-                          <span>
-                            {item.profit_loss_percent >= 0 ? "+" : ""}
-                            {item.profit_loss_percent.toFixed(1)}%
-                          </span>
-                        </div>
-
-                        <div
-                          className={cn(
-                            "h-5 w-12 shrink-0",
-                            isHidden && "blur-sm"
-                          )}
-                        >
-                          <Sparkline
-                            data={sparkData}
-                            width={48}
-                            height={20}
-                            strokeWidth={1}
-                            className="w-full opacity-40 group-hover:opacity-100 transition-opacity"
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    {tp[f === "all" ? "all" : f === "currency" ? "currencies" : f]} {counts[f]}
+                  </button>
                 );
               })}
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* ═══════════════════════════════════════════════════════
-          Floating Action Button
-          ═══════════════════════════════════════════════════════ */}
-      <Button
-        onClick={() => {
-          setEditingItem(null);
-          setIsAddModalOpen(true);
-        }}
-        size="lg"
-        className={cn(
-          "fixed bottom-6 start-6 z-40 rounded-full",
-          "shadow-lg hover:shadow-xl transition-all duration-300",
-          "hover:scale-110 active:scale-95"
-        )}
-      >
-        <Plus className="h-5 w-5 me-2" />
-        {t.pages.portfolio.recordBuy}
-      </Button>
-
-      {/* ═══════════════════════════════════════════════════════
-          Add/Edit Asset Modal
-          ═══════════════════════════════════════════════════════ */}
-      {isAddModalOpen && (
-        <AddAssetModal
-          item={editingItem}
-          onClose={handleModalClose}
-        />
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════
-// Add Asset Modal Component
-// ═══════════════════════════════════════════════════════
-
-interface AddAssetModalProps {
-  item: PortfolioItem | null;
-  onClose: () => void;
-}
-
-function AddAssetModal({ item, onClose }: AddAssetModalProps) {
-  const { t } = useLanguage();
-  const createMutation = useCreatePortfolioItem();
-  const updateMutation = useUpdatePortfolioItem();
-
-  const [type, setType] = useState<PortfolioAssetType>(item?.type || "gold");
-  const [name, setName] = useState(item?.name || "");
-  const [amount, setAmount] = useState(item?.amount.toString() || "");
-  const [buyPrice, setBuyPrice] = useState(item?.buy_price.toString() || "");
-  const [date, setDate] = useState(
-    item?.purchase_date || new Date().toISOString().split("T")[0]
-  );
-  const [karat, setKarat] = useState<string>(
-    item?.karat?.toString() || ""
-  );
-  const [currencyCode, setCurrencyCode] = useState<string>(
-    item?.currency_code || ""
-  );
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  const mutationError = createMutation.error || updateMutation.error;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const data: CreatePortfolioItemRequest = {
-      type,
-      name,
-      amount: parseFloat(amount),
-      buy_price: parseFloat(buyPrice),
-      purchase_date: date,
-      ...(type === "gold" && karat ? { karat: parseInt(karat) } : {}),
-      ...(type === "silver" && karat ? { karat: parseInt(karat) } : {}),
-      ...(type === "currency" && currencyCode ? { currency_code: currencyCode } : {}),
-    };
-
-    if (item) {
-      updateMutation.mutate(
-        { id: item.id, data },
-        { onSuccess: () => onClose() }
-      );
-    } else {
-      createMutation.mutate(data, { onSuccess: () => onClose() });
-    }
-  };
-
-  const typeButton = (value: PortfolioAssetType, label: string) => (
-    <button
-      type="button"
-      onClick={() => {
-        setType(value);
-        if (value === "gold") { setKarat("24"); setCurrencyCode(""); }
-        else if (value === "silver") { setKarat(""); setCurrencyCode(""); }
-        else { setKarat(""); setCurrencyCode("USD"); }
-      }}
-      className={cn(
-        "flex-1 px-4 py-2.5 rounded-md border text-sm font-medium transition-colors",
-        type === value
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-input hover:bg-accent hover:text-accent-foreground"
-      )}
-    >
-      {label}
-    </button>
-  );
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
-      {/* Backdrop */}
-      <button
-        type="button"
-        className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-sm"
-        onClick={onClose}
-        aria-label="إغلاق"
-      />
-
-      {/* Panel */}
-      <div className="relative w-full md:max-w-lg max-h-[90vh] overflow-y-auto bg-background rounded-t-2xl md:rounded-2xl shadow-lg border">
-        {/* Header */}
-        <div className="sticky top-0 bg-background border-b px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold">
-            {item ? t.pages.portfolio.edit : t.pages.portfolio.addAsset}
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            aria-label="إغلاق"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Mutation error */}
-          {mutationError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 p-3">
-              <p className="text-sm text-red-800 dark:text-red-200">
-                {mutationError.message}
-              </p>
-            </div>
-          )}
-
-          {/* Type Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              {t.pages.portfolio.type}
-            </label>
-            <div className="flex gap-2">
-              {typeButton("gold", t.pages.portfolio.gold)}
-              {typeButton("silver", "فضة")}
-              {typeButton("currency", t.pages.portfolio.currencies)}
-            </div>
-          </div>
-
-          {/* Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              الاسم
-            </label>
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder={
-                type === "gold"
-                  ? "مثال: سبيكة 10 جرام"
-                  : type === "silver"
-                  ? "مثال: سبيكة فضة 100 جرام"
-                  : "مثال: دولار أمريكي"
-              }
+            <SegmentedControl
+              items={[
+                { value: "cards", label: tp.viewCards },
+                { value: "table", label: tp.viewTable },
+              ]}
+              value={view}
+              onChange={(v) => setView(v as "cards" | "table")}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Karat / Currency Code */}
-            {type === "gold" ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t.pages.calculator.karat}
-                </label>
-                <select
-                  value={karat}
-                  onChange={(e) => setKarat(e.target.value)}
-                  required
-                  className={selectClassName}
-                >
-                  <option value="">اختر العيار</option>
-                  <option value="24">24 قيراط</option>
-                  <option value="21">21 قيراط</option>
-                  <option value="18">18 قيراط</option>
-                </select>
-              </div>
-            ) : type === "currency" ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t.currency.currencyName}
-                </label>
-                <select
-                  value={currencyCode}
-                  onChange={(e) => setCurrencyCode(e.target.value)}
-                  required
-                  className={selectClassName}
-                >
-                  <option value="">اختر العملة</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                  <option value="SAR">SAR</option>
-                  <option value="AED">AED</option>
-                  <option value="KWD">KWD</option>
-                </select>
-              </div>
-            ) : (
-              /* Silver - no karat/currency needed, show amount in this spot */
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t.pages.portfolio.amount}
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  min="0"
-                />
-              </div>
-            )}
-
-            {/* Amount (for gold/currency, silver handled above) */}
-            {type !== "silver" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t.pages.portfolio.amount}
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  min="0"
-                />
-              </div>
-            )}
-
-            {/* Buy Price */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t.pages.portfolio.pricePerUnit}
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                value={buyPrice}
-                onChange={(e) => setBuyPrice(e.target.value)}
-                required
-                min="0"
-              />
+          {view === "cards" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+              {visibleItems.map((item) => (
+                <AssetCard key={item.id} item={item} isHidden={isHidden} onEdit={() => openEdit(item)} onDelete={() => setDeleteTarget(item)} />
+              ))}
             </div>
+          ) : (
+            <AssetTable items={visibleItems} isHidden={isHidden} />
+          )}
 
-            {/* Date */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t.pages.portfolio.date}
-              </label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+          <InlineAlert variant="info">{tp.infoNoteBody}</InlineAlert>
+        </>
+      )}
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isPending}
-            >
-              {t.pages.portfolio.cancel}
-            </Button>
-            <Button type="submit" className="flex-1" disabled={isPending}>
-              {isPending && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
-              {t.pages.portfolio.save}
-            </Button>
-          </div>
-        </form>
-      </div>
+      <AssetDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        item={editingItem}
+        initialType={drawerInitialType}
+        options={optionsQuery.data?.data}
+        optionsLoading={optionsQuery.isLoading}
+        optionsError={optionsQuery.error}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={tp.deleteConfirmTitle}
+        description={tp.deleteConfirmDescription}
+        confirmLabel={tp.delete}
+        cancelLabel={tp.cancel}
+        onConfirm={confirmDelete}
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }

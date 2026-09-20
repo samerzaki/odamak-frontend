@@ -36,7 +36,7 @@ export function transformSilverItem(
     changeColor: data.change.color,
     trend,
     currency: data.currency,
-    chartPoints: Array.isArray(data.chart_points) ? data.chart_points : [],
+    chartPoints: Array.isArray(data.chart_points_7d) ? data.chart_points_7d : [],
     live: data.last_checked.live,
     lastCheckedAtForHuman: data.last_checked.last_checked_at_for_human,
   };

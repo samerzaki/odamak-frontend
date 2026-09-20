@@ -7,7 +7,9 @@ import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AuthCard } from "@/components/auth/auth-card";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { resetPassword } from "@/lib/api-auth";
 import { CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 
@@ -70,7 +72,7 @@ function ResetPasswordContent() {
 
   if (success) {
     return (
-      <AuthCard appTitle={t.common.appName} showTabs={false}>
+      <AuthShell showTabs={false}>
         <div className="text-center">
           <div className="mx-auto w-14 h-14 bg-up-soft rounded-full flex items-center justify-center mb-4">
             <CheckCircle className="w-7 h-7 text-up" />
@@ -80,17 +82,13 @@ function ResetPasswordContent() {
           </h2>
           <p className="text-[13px] text-muted">{t.pages.resetPassword.successRedirect}</p>
         </div>
-      </AuthCard>
+      </AuthShell>
     );
   }
 
   if (!token || !email) {
     return (
-      <AuthCard appTitle={t.common.appName} showTabs={false}>
-        <div className="text-center mb-6">
-          <h2 className="font-heading text-[18px] font-semibold text-down">{t.pages.resetPassword.invalidLinkTitle}</h2>
-          <p className="text-[13px] text-muted mt-1">{t.pages.resetPassword.invalidLinkDescription}</p>
-        </div>
+      <AuthShell showTabs={false} title={t.pages.resetPassword.invalidLinkTitle} subtitle={t.pages.resetPassword.invalidLinkDescription}>
         <div className="space-y-4">
           <Link href="/auth/forgot-password">
             <Button className="w-full h-12" size="lg">
@@ -104,17 +102,12 @@ function ResetPasswordContent() {
             </Link>
           </div>
         </div>
-      </AuthCard>
+      </AuthShell>
     );
   }
 
   return (
-    <AuthCard appTitle={t.common.appName} showTabs={false}>
-      <div className="text-center mb-6">
-        <h2 className="font-heading text-[18px] font-semibold text-text">{t.pages.resetPassword.title}</h2>
-        <p className="text-[13px] text-muted mt-1">{t.pages.resetPassword.subtitle}</p>
-      </div>
-
+    <AuthShell showTabs={false} title={t.pages.resetPassword.title} subtitle={t.pages.resetPassword.subtitle}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password">{t.pages.resetPassword.newPasswordLabel}</Label>
@@ -126,9 +119,20 @@ function ResetPasswordContent() {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoading}
-            className="w-full"
+            className="num"
             autoFocus
           />
+          {password && (
+            <PasswordStrength
+              password={password}
+              labels={[
+                t.pages.passwordStrength.empty,
+                t.pages.passwordStrength.weak,
+                t.pages.passwordStrength.fair,
+                t.pages.passwordStrength.strong,
+              ]}
+            />
+          )}
         </div>
 
         <div className="space-y-2">
@@ -141,16 +145,12 @@ function ResetPasswordContent() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             disabled={isLoading}
-            className="w-full"
+            className="num"
           />
           <p className="text-[12px] text-dim">{t.pages.resetPassword.passwordHint}</p>
         </div>
 
-        {error && (
-          <div className="p-3 text-[13px] text-down bg-down-soft rounded-[10px]">
-            {error}
-          </div>
-        )}
+        {error && <InlineAlert variant="error">{error}</InlineAlert>}
 
         <Button type="submit" className="w-full h-12" size="lg" disabled={isLoading}>
           {isLoading ? t.pages.resetPassword.submitting : t.pages.resetPassword.submitButton}
@@ -163,7 +163,7 @@ function ResetPasswordContent() {
           {t.pages.resetPassword.backToLogin}
         </Link>
       </div>
-    </AuthCard>
+    </AuthShell>
   );
 }
 

@@ -3,8 +3,8 @@
 import { AlertCircle, Bell, Calculator } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language-context';
-import { useAllSilverPrices } from '@/hooks/use-silver-prices';
-import { SilverAllPricesItem } from '@/types';
+import { useSilverOverview } from '@/hooks/use-silver-prices';
+import { SilverOverviewItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { Sparkline } from '@/components/ui/sparkline';
@@ -30,17 +30,17 @@ interface SilverDataItem {
   isOunce: boolean;
 }
 
-function transformApiItem(key: string, data: SilverAllPricesItem, isRTL: boolean): SilverDataItem {
+function transformApiItem(key: string, data: SilverOverviewItem, isRTL: boolean): SilverDataItem {
   return {
-    id: data.key || key,
-    name: isRTL ? data.name : (SILVER_NAMES[key] ?? data.name),
+    id: key,
+    name: isRTL ? (SILVER_NAMES[key] ?? key) : (SILVER_NAMES[key] ?? key),
     sellPrice: data.price.sell,
     buyPrice: data.price.buy,
     changePercent: data.change.percent,
     trend: data.change.color === 'green' ? 'up' : data.change.color === 'red' ? 'down' : 'neutral',
-    chartPoints: data.chart_points ?? [],
+    chartPoints: data.chart_points_30d ?? [],
     currency: data.currency,
-    isOunce: data.type === 'ounce' || key === 'ounce',
+    isOunce: key === 'ounce',
   };
 }
 
@@ -74,10 +74,10 @@ export default function SilverPage() {
   const isRTL = language === 'ar';
   const locale = isRTL ? 'ar-EG' : 'en-US';
   const direction = isRTL ? 'rtl' : 'ltr';
-  const { data, isLoading, error } = useAllSilverPrices('EGP', '30d');
+  const { data, isLoading, error } = useSilverOverview();
 
   const silverItems = Object.entries(data?.data?.silver ?? {})
-    .filter((entry): entry is [string, SilverAllPricesItem] => Boolean(entry[1]?.price))
+    .filter((entry): entry is [string, SilverOverviewItem] => Boolean(entry[1]?.price))
     .map(([key, value]) => transformApiItem(key, value, isRTL));
 
   const features = [

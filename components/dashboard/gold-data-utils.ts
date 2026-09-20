@@ -7,17 +7,17 @@ import { GoldOverviewItem } from '@/types';
  */
 export interface GoldDataItem {
   id: string;
-  nameKey: 'karat21' | 'karat24' | 'karat18' | 'pound' | 'ounce';
+  nameKey: 'karat14' | 'karat18' | 'karat21' | 'karat22' | 'karat24' | 'pound' | 'ounce';
   karat: string;
   sellPrice: number;
   buyPrice: number;
-  change: number;
-  changePercent: number;
+  change: number | null;
+  changePercent: number | null;
   trend: 'up' | 'down' | 'neutral';
   currency: string;
   recordedAt: string;
   chartPoints: number[];
-  chartColor: string;
+  chartColor?: string;
   lastCheckedAt?: string;
   lastCheckedAtForHuman?: string;
 }
@@ -32,9 +32,11 @@ export function transformApiDataToGoldDataItem(
   lastCheckedAtForHuman?: string
 ): GoldDataItem {
   const keyMap: Record<string, { id: string; nameKey: GoldDataItem['nameKey']; karat: string }> = {
-    '21': { id: 'k21', nameKey: 'karat21', karat: 'k21' },
-    '24': { id: 'k24', nameKey: 'karat24', karat: 'k24' },
+    '14': { id: 'k14', nameKey: 'karat14', karat: 'k14' },
     '18': { id: 'k18', nameKey: 'karat18', karat: 'k18' },
+    '21': { id: 'k21', nameKey: 'karat21', karat: 'k21' },
+    '22': { id: 'k22', nameKey: 'karat22', karat: 'k22' },
+    '24': { id: 'k24', nameKey: 'karat24', karat: 'k24' },
     'gold_pound': { id: 'pound', nameKey: 'pound', karat: 'pound' },
     'ounce': { id: 'ounce', nameKey: 'ounce', karat: 'ounce' },
   };
@@ -55,7 +57,7 @@ export function transformApiDataToGoldDataItem(
     trend,
     currency: data.currency,
     recordedAt: data.last_checked.last_checked_at,
-    chartPoints: Array.isArray(data.chart_points) ? data.chart_points : [],
+    chartPoints: data.chart_points_30d ?? [],
     chartColor: data.chart_color,
     lastCheckedAt: lastCheckedAt ?? data.last_checked.last_checked_at,
     lastCheckedAtForHuman: lastCheckedAtForHuman ?? data.last_checked.last_checked_at_for_human,

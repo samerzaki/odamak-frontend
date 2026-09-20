@@ -42,6 +42,14 @@ export const primaryNav: NavItem[] = [
 ];
 
 /**
+ * Routes that render their own full-screen shell and opt out of the global
+ * header / price ticker / footer / bottom nav (see components/layout/app-shell.tsx).
+ */
+export function isChromelessPath(pathname: string): boolean {
+  return pathname.startsWith('/auth');
+}
+
+/**
  * Whether `href` should be highlighted as active for the current `pathname`,
  * picking the *longest* matching primaryNav href so e.g. "/gold/calculator"
  * doesn't also light up "/gold".

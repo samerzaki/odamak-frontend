@@ -154,7 +154,7 @@ export function PhoneInputField({
       </div>
 
       {errorMessage && (
-        <p className="text-xs text-red-600 dark:text-red-400">{errorMessage}</p>
+        <p className="text-[12px] text-down">{errorMessage}</p>
       )}
     </div>
   );

@@ -1,88 +1,93 @@
-// Portfolio API types
+export type PortfolioAssetType = "gold" | "silver" | "currency" | "crypto";
+export type PortfolioFilterType = "all" | PortfolioAssetType;
 
-export type PortfolioAssetType = 'gold' | 'silver' | 'currency';
-export type PortfolioFilterType = 'all' | PortfolioAssetType;
+export type PortfolioNumber = number | string | null;
 
 export interface PortfolioItem {
   id: number;
   type: PortfolioAssetType;
   name: string;
-  amount: number;
-  buy_price: number;
-  purchase_date: string;
+  amount: number | string;
   karat: number | null;
   purity: number | null;
   currency_code: string | null;
+  coin_id: string | null;
+  buy_price: PortfolioNumber;
+  purchase_date: string | null;
   notes: string | null;
-  current_price: number;
-  current_value: number;
-  cost_basis: number;
-  profit_loss: number;
-  profit_loss_percent: number;
+  current_price: PortfolioNumber;
+  current_value: PortfolioNumber;
+  purchase_value: PortfolioNumber;
+  cost_basis: PortfolioNumber;
+  profit_loss: PortfolioNumber;
+  profit_loss_percent: PortfolioNumber;
   created_at: string;
 }
 
-export interface PortfolioAllocation {
-  value: number;
-  percentage: number;
-}
-
-export interface PortfolioPerformer {
-  id: number;
-  name: string;
-  profit_loss_percent: number;
+export interface PortfolioBreakdownItem {
+  current_value: PortfolioNumber;
+  purchase_value: PortfolioNumber;
+  profit_loss: PortfolioNumber;
+  profit_loss_percent: PortfolioNumber;
+  assets_count: number;
 }
 
 export interface PortfolioSummary {
-  total_cost_basis: number;
-  total_current_value: number;
-  total_profit_loss: number;
-  profit_loss_percent: number;
+  total_current_value: PortfolioNumber;
+  total_purchase_value: PortfolioNumber;
+  total_profit_loss: PortfolioNumber;
+  total_profit_loss_percent: PortfolioNumber;
+  assets_count: number;
+  breakdown: {
+    gold: PortfolioBreakdownItem;
+    silver: PortfolioBreakdownItem;
+    currencies: PortfolioBreakdownItem;
+    crypto: PortfolioBreakdownItem;
+  };
   allocation: {
-    gold: PortfolioAllocation;
-    silver: PortfolioAllocation;
-    currency: PortfolioAllocation;
+    gold_percent: number | null;
+    silver_percent: number | null;
+    currencies_percent: number | null;
+    crypto_percent: number | null;
   };
-  best_performer: PortfolioPerformer | null;
-  worst_performer: PortfolioPerformer | null;
 }
 
-export interface PortfolioCounts {
-  all: number;
-  gold: number;
-  silver: number;
-  currency: number;
+export interface PortfolioCryptoOption {
+  coin_id: string;
+  symbol: string;
+  name: string;
+  image?: string | null;
 }
 
-export interface PortfolioIndexResponse {
+export interface PortfolioOptions {
+  gold_karats: number[];
+  silver_purities: number[];
+  currencies: Array<string | { code?: string; currency_code?: string; name?: string; name_en?: string; name_ar?: string }>;
+  crypto: PortfolioCryptoOption[];
+}
+
+export interface ApiEnvelope<T> {
   status: number;
   success: boolean;
-  data: PortfolioItem[];
-  meta: {
-    summary: PortfolioSummary;
-    counts: PortfolioCounts;
-  };
+  data: T;
 }
 
-export interface PortfolioItemResponse {
-  status: number;
-  success: boolean;
-  data: PortfolioItem;
-  meta: {
-    message: string;
-  };
-}
+export type PortfolioIndexResponse = ApiEnvelope<PortfolioItem[]>;
+export type PortfolioSummaryResponse = ApiEnvelope<PortfolioSummary>;
+export type PortfolioOptionsResponse = ApiEnvelope<PortfolioOptions>;
+export type PortfolioItemResponse = ApiEnvelope<PortfolioItem>;
 
 export interface CreatePortfolioItemRequest {
   type: PortfolioAssetType;
   name: string;
-  amount: number;
-  buy_price: number;
-  purchase_date: string;
+  amount: string;
+  buy_price?: string | null;
+  purchase_date?: string | null;
   karat?: number;
   purity?: number;
   currency_code?: string;
-  notes?: string;
+  coin_id?: string;
+  notes?: string | null;
 }
 
-export type UpdatePortfolioItemRequest = CreatePortfolioItemRequest;
+export type UpdatePortfolioItemRequest = Partial<CreatePortfolioItemRequest>;

@@ -1,9 +1,11 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { BottomNav } from "./bottom-nav";
 import { Footer } from "./footer";
 import { PriceTicker } from "./price-ticker";
 import { cn } from "@/lib/utils";
+import { isChromelessPath } from "@/lib/navigation";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -11,6 +13,14 @@ type AppShellProps = {
 };
 
 export function AppShell({ children, className }: AppShellProps) {
+  const pathname = usePathname();
+
+  // Auth pages render their own full-screen shell (components/auth/auth-shell.tsx)
+  // and opt out of the site chrome entirely.
+  if (isChromelessPath(pathname)) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <PriceTicker />

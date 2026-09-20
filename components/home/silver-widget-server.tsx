@@ -1,10 +1,10 @@
-import { fetchGoldOverview } from '@/lib/api';
+import { fetchSilverOverview } from '@/lib/api';
 import { SilverWidgetClient } from './silver-widget';
 import { transformSilverItem, HOMEPAGE_SILVER_KEYS, SilverDataItem } from './silver-data-utils';
 
 export async function SilverWidgetServer() {
   try {
-    const data = await fetchGoldOverview();
+    const data = await fetchSilverOverview();
     const silverItems: SilverDataItem[] = [];
     const silverData = data.data?.silver;
 

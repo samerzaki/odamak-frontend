@@ -5,11 +5,23 @@ import {
   fetchHighestBuyPrice,
   fetchHighestSellPrice,
   fetchCurrencyAverages,
+  fetchCurrencyOverview,
   fetchCurrencyBanks,
   fetchBlackMarketRates,
 } from '@/lib/api';
 import { REFRESH_INTERVAL } from '@/lib/constants';
 import type { CurrencyPrice } from '@/types';
+
+/** Fetch the combined bank and parallel-market currency overview. */
+export function useCurrencyOverview(fromCurrency: string, toCurrency: string = 'EGP', enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['currency-overview', fromCurrency, toCurrency],
+    queryFn: () => fetchCurrencyOverview(fromCurrency, toCurrency),
+    refetchInterval: REFRESH_INTERVAL,
+    staleTime: 30000,
+    enabled,
+  });
+}
 
 /**
  * Get highest buy price for a currency across all banks

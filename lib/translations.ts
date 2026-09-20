@@ -142,6 +142,9 @@ export interface Translations {
     errorPasswordMismatch: string;
     errorPasswordLength: string;
     comingSoon?: string;
+    show: string;
+    hide: string;
+    securityCheckError: string;
   };
 
   alerts?: { createAlert?: string };
@@ -177,6 +180,7 @@ export interface Translations {
         submitButton: string;
         submitting: string;
         or: string;
+        socialDivider: string;
         demoLogin: string;
         noAccount: string;
         createAccount: string;
@@ -186,6 +190,8 @@ export interface Translations {
         privacyLink: string;
         footerText: string;
         errorDefault: string;
+        rememberMe: string;
+        invalidEmail: string;
       };
       register: {
         appTitle: string;
@@ -206,6 +212,7 @@ export interface Translations {
         submitButton: string;
         submitting: string;
         or: string;
+        socialDivider: string;
         demoRegister: string;
         hasAccount: string;
         loginLink: string;
@@ -223,6 +230,9 @@ export interface Translations {
         errorPasswordMismatch: string;
         errorPasswordLength: string;
         errorDefault: string;
+        sendAlerts: string;
+        phoneInvalid: string;
+        phoneValid: string;
       };
       forgotPassword: {
         title: string;
@@ -286,6 +296,33 @@ export interface Translations {
         resetPasswordButton: string;
         resetSuccess: string;
       };
+      social: {
+        google: string;
+        apple: string;
+        facebook: string;
+      };
+      passwordStrength: {
+        empty: string;
+        weak: string;
+        fair: string;
+        strong: string;
+      };
+      authAside: {
+        loginTitle: string;
+        loginSubtitle: string;
+        registerTitle: string;
+        registerSubtitle: string;
+        livePrices: string;
+        referencePrices: string;
+        benefitPortfolioTitle: string;
+        benefitPortfolioDesc: string;
+        benefitAlertsTitle: string;
+        benefitAlertsDesc: string;
+        benefitCalculatorsTitle: string;
+        benefitCalculatorsDesc: string;
+        benefitSyncTitle: string;
+        benefitSyncDesc: string;
+      };
       settings: {
         title: string;
         subtitle: string;
@@ -299,12 +336,25 @@ export interface Translations {
         profileDescription: string;
         nameLabel: string;
         emailLabel: string;
+        firstNameLabel: string;
+        lastNameLabel: string;
+        editProfileButton: string;
+        saveButton: string;
+        savingButton: string;
+        profileUpdated: string;
+        errorUpdateProfile: string;
+        deleteButton: string;
         changeEmailSection: string;
         changeEmailDescription: string;
         changeEmailButton: string;
         newEmailLabel: string;
         changingEmail: string;
         emailOtpSent: string;
+        newEmailTaken: string;
+        newEmailSameAsCurrent: string;
+        emailOtpTitle: string;
+        emailOtpSubtitle: string;
+        emailChangeSuccess: string;
         changePasswordSection: string;
         changePasswordDescription: string;
         changePasswordButton: string;
@@ -316,8 +366,42 @@ export interface Translations {
         changingPassword: string;
         passwordChanged: string;
         cancel: string;
+        signOut: string;
+        savedLabel: string;
+        unsavedChanges: string;
+        showPasswords: string;
+        hidePasswords: string;
+        passwordRuleLength: string;
+        passwordRuleNumber: string;
+        passwordRuleMatch: string;
+        connectedAccounts: {
+          title: string;
+          hint: string;
+          connect: string;
+          disconnect: string;
+          notConnected: string;
+        };
+        sessions: {
+          title: string;
+          subtitle: string;
+          thisDevice: string;
+        };
+        topics: {
+          title: string;
+          subtitle: string;
+          priceAlerts: string;
+          priceAlertsDesc: string;
+          dailySummary: string;
+          dailySummaryDesc: string;
+          marketNews: string;
+          marketNewsDesc: string;
+          portfolioChanges: string;
+          portfolioChangesDesc: string;
+        };
         notificationsSection: string;
         notificationsDescription: string;
+        comingSoonBadge: string;
+        comingSoonNotice: string;
         emailNotifications: string;
         emailNotificationsDesc: string;
         smsNotifications: string;
@@ -361,6 +445,8 @@ export interface Translations {
           errorVerify: string;
           errorDelete: string;
           errorSetDefault: string;
+          retry: string;
+          errorLoadDescription: string;
           otpTitle: string;
           otpSubtitle: string;
           otpSuccess: string;
@@ -380,12 +466,17 @@ export interface Translations {
         title: string;
         subtitle: string;
         comingSoon: string;
+        lastUpdated: string;
+        hideNumbers: string;
+        showNumbers: string;
         totalWealth: string;
         totalProfitLoss: string;
         assetDistribution: string;
         all: string;
         gold: string;
+        silver: string;
         currencies: string;
+        crypto: string;
         currentValue: string;
         profitLoss: string;
         addAsset: string;
@@ -401,6 +492,50 @@ export interface Translations {
         cancel: string;
         noAssets: string;
         noAssetsDescription: string;
+        assetsSuffix: string;
+        purchaseValue: string;
+        pricedAssets: string;
+        ofLabel: string;
+        bestCategory: string;
+        notAvailable: string;
+        notRecorded: string;
+        distributionByValue: string;
+        distributionByCount: string;
+        myAssets: string;
+        viewCards: string;
+        viewTable: string;
+        emptyTitle: string;
+        emptyDescription: string;
+        addAssetTitle: string;
+        addAssetSubtitle: string;
+        assetNameLabel: string;
+        assetNamePlaceholderGold: string;
+        assetNamePlaceholderCrypto: string;
+        assetNamePlaceholderGeneric: string;
+        amountLabelWeight: string;
+        amountLabelCurrency: string;
+        amountLabelCrypto: string;
+        karatLabel: string;
+        purityLabel: string;
+        currencyLabel: string;
+        coinLabel: string;
+        buyPriceOptionalLabel: string;
+        buyPriceHint: string;
+        purchaseDateLabel: string;
+        notesLabel: string;
+        notesPlaceholder: string;
+        saveAsset: string;
+        deleteConfirmTitle: string;
+        deleteConfirmDescription: string;
+        columnAsset: string;
+        columnAmount: string;
+        columnPrice: string;
+        columnCurrentValue: string;
+        columnPurchaseValue: string;
+        columnProfitLoss: string;
+        infoNoteTitle: string;
+        infoNoteBody: string;
+        currentPriceLabel: string;
       };
       watchlist: {
         title: string;
@@ -856,6 +991,9 @@ export const translations: Record<Language, Translations> = {
       appName: 'قدامك',
       errorPasswordMismatch: 'كلمات المرور غير متطابقة',
       errorPasswordLength: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+      show: 'إظهار',
+      hide: 'إخفاء',
+      securityCheckError: 'يرجى إكمال التحقق الأمني',
     },
     charts: {
       chartTitle: 'الرسم البياني',
@@ -877,13 +1015,14 @@ export const translations: Record<Language, Translations> = {
         appTitle: 'قدامك',
         appSubtitle: 'تتبع أسعار الذهب والعملات في الوقت الحقيقي',
         title: 'تسجيل الدخول',
-        subtitle: 'أدخل بياناتك للوصول إلى حسابك',
+        subtitle: 'سجّل الدخول لمتابعة محفظتك وتنبيهات الأسعار وحساباتك المحفوظة',
         emailLabel: 'البريد الإلكتروني',
         passwordLabel: 'كلمة المرور',
         forgotPassword: 'نسيت كلمة المرور؟',
         submitButton: 'تسجيل الدخول',
         submitting: 'جاري تسجيل الدخول...',
         or: 'أو',
+        socialDivider: 'أو الدخول بالبريد الإلكتروني',
         demoLogin: 'تسجيل دخول تجريبي',
         noAccount: 'ليس لديك حساب؟',
         createAccount: 'إنشاء حساب جديد',
@@ -893,18 +1032,20 @@ export const translations: Record<Language, Translations> = {
         privacyLink: 'سياسة الخصوصية',
         footerText: 'التطبيق يوفر لك أحدث أسعار الذهب والعملات مع إمكانيات متقدمة للمتابعة',
         errorDefault: 'حدث خطأ أثناء تسجيل الدخول',
+        rememberMe: 'إبقني مسجلاً للدخول',
+        invalidEmail: 'أدخل بريدًا إلكترونيًا صحيحًا',
       },
       register: {
         appTitle: 'قدامك',
         appSubtitle: 'انضم لمتابعة أسعار الذهب والعملات',
         title: 'إنشاء حساب جديد',
-        subtitle: 'أنشئ حسابك للوصول إلى الميزات المتقدمة',
+        subtitle: 'سجّل ما تملكه واحصل على تنبيهات الأسعار واحتفظ بحساباتك المحفوظة',
         firstNameLabel: 'الاسم الأول',
         firstNamePlaceholder: 'أدخل اسمك الأول',
         lastNameLabel: 'اسم العائلة',
         lastNamePlaceholder: 'أدخل اسم العائلة',
         emailLabel: 'البريد الإلكتروني',
-        phoneLabel: 'رقم الهاتف (اختياري)',
+        phoneLabel: 'رقم الهاتف',
         passwordLabel: 'كلمة المرور',
         passwordPlaceholder: '6 أحرف على الأقل',
         passwordHint: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
@@ -913,6 +1054,7 @@ export const translations: Record<Language, Translations> = {
         submitButton: 'إنشاء حساب',
         submitting: 'جاري إنشاء الحساب...',
         or: 'أو',
+        socialDivider: 'أو التسجيل بالبريد الإلكتروني',
         demoRegister: 'إنشاء حساب تجريبي',
         hasAccount: 'لديك حساب بالفعل؟',
         loginLink: 'تسجيل الدخول',
@@ -930,6 +1072,9 @@ export const translations: Record<Language, Translations> = {
         errorPasswordMismatch: 'كلمات المرور غير متطابقة',
         errorPasswordLength: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
         errorDefault: 'حدث خطأ أثناء إنشاء الحساب',
+        sendAlerts: 'أرسل لي تنبيهات الأسعار بالبريد الإلكتروني',
+        phoneInvalid: 'يرجى إدخال رقم هاتف صحيح',
+        phoneValid: 'رقم الهاتف صحيح',
       },
       forgotPassword: {
         title: 'استعادة كلمة المرور',
@@ -993,6 +1138,33 @@ export const translations: Record<Language, Translations> = {
         resetPasswordButton: 'تعيين كلمة المرور',
         resetSuccess: 'تم تعيين كلمة المرور بنجاح!',
       },
+      social: {
+        google: 'جوجل',
+        apple: 'آبل',
+        facebook: 'فيسبوك',
+      },
+      passwordStrength: {
+        empty: 'أدخل كلمة مرور',
+        weak: 'ضعيفة',
+        fair: 'متوسطة',
+        strong: 'قوية',
+      },
+      authAside: {
+        loginTitle: 'ذهبك، متتبَّع في مكان واحد.',
+        loginSubtitle: 'أسعار محلية وعالمية مباشرة، محفظة تقيّم نفسها، وتنبيهات تصلك لحظة وصول أي عيار لهدفك.',
+        registerTitle: 'ابدأ التتبع في أقل من دقيقة.',
+        registerSubtitle: 'سجّل ما تملكه مرة واحدة ونحن نقيّمه من بيانات السوق المباشرة — بدون جداول بيانات أو أسعار يدوية.',
+        livePrices: 'أسعار مباشرة',
+        referencePrices: 'أسعار مرجعية اليوم',
+        benefitPortfolioTitle: 'محفظة تقيّم نفسها',
+        benefitPortfolioDesc: 'ذهب وفضة وعملات وعملات رقمية، بأسعار من بيانات السوق المخزنة.',
+        benefitAlertsTitle: 'تنبيهات الأسعار',
+        benefitAlertsDesc: 'أخبرنا بهدفك ونرسل لك رسالة عند وصول أي عيار إليه.',
+        benefitCalculatorsTitle: 'حاسبات ذكية',
+        benefitCalculatorsDesc: 'مصنعية، إعادة بيع، تحويل عيار، ودمغة وزكاة.',
+        benefitSyncTitle: 'محفوظة على كل أجهزتك',
+        benefitSyncDesc: 'أصولك وتنبيهاتك تتبعك على الويب وتطبيق الموبايل.',
+      },
       settings: {
         title: 'الإعدادات',
         subtitle: 'إدارة حسابك وتفضيلاتك',
@@ -1006,12 +1178,25 @@ export const translations: Record<Language, Translations> = {
         profileDescription: 'بياناتك الشخصية',
         nameLabel: 'الاسم',
         emailLabel: 'البريد الإلكتروني',
+        firstNameLabel: 'الاسم الأول',
+        lastNameLabel: 'اسم العائلة',
+        editProfileButton: 'تعديل',
+        saveButton: 'حفظ',
+        savingButton: 'جاري الحفظ...',
+        profileUpdated: 'تم تحديث بياناتك بنجاح',
+        errorUpdateProfile: 'فشل تحديث البيانات',
+        deleteButton: 'حذف',
         changeEmailSection: 'تغيير البريد الإلكتروني',
         changeEmailDescription: 'سيتم إرسال رمز تحقق للبريد الجديد',
         changeEmailButton: 'تغيير البريد الإلكتروني',
         newEmailLabel: 'البريد الإلكتروني الجديد',
         changingEmail: 'جاري التغيير...',
         emailOtpSent: 'تم إرسال رمز التحقق للبريد الجديد',
+        newEmailTaken: 'هذا البريد الإلكتروني مستخدم بالفعل',
+        newEmailSameAsCurrent: 'هذا هو بريدك الإلكتروني الحالي بالفعل',
+        emailOtpTitle: 'التحقق من البريد الإلكتروني',
+        emailOtpSubtitle: 'أدخل رمز التحقق المرسل إلى',
+        emailChangeSuccess: 'تم تغيير البريد الإلكتروني بنجاح',
         changePasswordSection: 'تغيير كلمة المرور',
         changePasswordDescription: 'اختر كلمة مرور قوية لحماية حسابك',
         changePasswordButton: 'تغيير كلمة المرور',
@@ -1023,8 +1208,42 @@ export const translations: Record<Language, Translations> = {
         changingPassword: 'جاري التغيير...',
         passwordChanged: 'تم تغيير كلمة المرور بنجاح',
         cancel: 'إلغاء',
+        signOut: 'تسجيل الخروج',
+        savedLabel: 'تم الحفظ',
+        unsavedChanges: 'تغييرات غير محفوظة',
+        showPasswords: 'إظهار كلمات المرور',
+        hidePasswords: 'إخفاء كلمات المرور',
+        passwordRuleLength: '6 أحرف على الأقل',
+        passwordRuleNumber: 'تحتوي على رقم',
+        passwordRuleMatch: 'كلمة المرور الجديدة مطابقة للتأكيد',
+        connectedAccounts: {
+          title: 'حسابات مربوطة',
+          hint: 'استخدمها لتسجيل دخول أسرع',
+          connect: 'ربط',
+          disconnect: 'إلغاء الربط',
+          notConnected: 'غير مربوط',
+        },
+        sessions: {
+          title: 'الجلسات النشطة',
+          subtitle: 'سجّل خروج أي جهاز لا تتعرف عليه',
+          thisDevice: 'هذا الجهاز',
+        },
+        topics: {
+          title: 'ماذا تريد أن نخبرك به',
+          subtitle: 'تنطبق هذه الإعدادات على كل قناة تفعّلها',
+          priceAlerts: 'تنبيهات الأسعار',
+          priceAlertsDesc: 'عند وصول عيار الذهب أو عملة إلى هدفك',
+          dailySummary: 'ملخص يومي',
+          dailySummaryDesc: 'رسالة واحدة كل مساء بأسعار الإغلاق',
+          marketNews: 'أخبار السوق',
+          marketNewsDesc: 'العناوين التي تحرّك أسعار الذهب',
+          portfolioChanges: 'تغييرات المحفظة',
+          portfolioChangesDesc: 'ملخص أسبوعي لقيمة أصولك وأرباحك',
+        },
         notificationsSection: 'قنوات الإشعارات',
         notificationsDescription: 'اختر كيف تريد تلقي الإشعارات',
+        comingSoonBadge: 'قريباً',
+        comingSoonNotice: 'قنوات الإشعارات قيد التطوير حالياً وستتوفر قريباً.',
         emailNotifications: 'إشعارات البريد الإلكتروني',
         emailNotificationsDesc: 'تلقي تنبيهات الأسعار عبر البريد',
         smsNotifications: 'إشعارات الرسائل النصية',
@@ -1068,6 +1287,8 @@ export const translations: Record<Language, Translations> = {
           errorVerify: 'فشل إرسال رمز التحقق',
           errorDelete: 'فشل حذف الرقم',
           errorSetDefault: 'فشل تعيين الرقم الافتراضي',
+          retry: 'إعادة المحاولة',
+          errorLoadDescription: 'تحقق من اتصالك وحاول مرة أخرى. أرقامك المحفوظة بأمان.',
           otpTitle: 'التحقق من رقم الهاتف',
           otpSubtitle: 'أدخل رمز التحقق المرسل إلى',
           otpSuccess: 'تم التحقق بنجاح!',
@@ -1084,17 +1305,22 @@ export const translations: Record<Language, Translations> = {
         subtitle: 'مقارنة أسعار البنوك والسوق الموازي',
       },
       portfolio: {
-        title: 'المحفظة',
+        title: 'محفظة الأصول',
         subtitle: 'مقتنياتك من الذهب والعملات',
         comingSoon: 'قريباً...',
-        totalWealth: 'إجمالي المحفظة',
+        lastUpdated: 'آخر تحديث',
+        hideNumbers: 'إخفاء الأرقام',
+        showNumbers: 'إظهار الأرقام',
+        totalWealth: 'إجمالي قيمة المحفظة',
         totalProfitLoss: 'إجمالي الربح/الخسارة',
-        assetDistribution: 'توزيع الأصول',
+        assetDistribution: 'توزيع المحفظة',
         all: 'الكل',
         gold: 'ذهب',
+        silver: 'فضة',
         currencies: 'عملات',
+        crypto: 'عملات رقمية',
         currentValue: 'القيمة الحالية',
-        profitLoss: 'الربح/الخسارة',
+        profitLoss: 'الربح / الخسارة',
         addAsset: 'إضافة أصل',
         recordBuy: 'تسجيل شراء',
         edit: 'تعديل',
@@ -1106,8 +1332,52 @@ export const translations: Record<Language, Translations> = {
         date: 'التاريخ',
         save: 'حفظ',
         cancel: 'إلغاء',
-        noAssets: 'لا توجد أصول',
-        noAssetsDescription: 'ابدأ بإضافة أصولك من الذهب والعملات لتتبع محفظتك',
+        noAssets: 'ابدأ بتسجيل أول أصل',
+        noAssetsDescription: 'سجّل الذهب والفضة والعملات التي معك، وسنحسب قيمتها الحالية وأرباحها من أسعار السوق المخزنة — بدون إدخال أي أرقام يدويًا.',
+        assetsSuffix: 'أصل',
+        purchaseValue: 'قيمة الشراء',
+        pricedAssets: 'أصول بسعر شراء مسجل',
+        ofLabel: 'من',
+        bestCategory: 'أفضل فئة أداءً',
+        notAvailable: 'غير متاح',
+        notRecorded: 'غير مسجل',
+        distributionByValue: 'بالقيمة',
+        distributionByCount: 'بالعدد',
+        myAssets: 'أصولي',
+        viewCards: 'كاردات',
+        viewTable: 'جدول',
+        emptyTitle: 'ابدأ بتسجيل أول أصل',
+        emptyDescription: 'سجّل الذهب والفضة والعملات التي معك، وسنحسب قيمتها الحالية وأرباحها من أسعار السوق المخزنة — بدون إدخال أي أرقام يدويًا.',
+        addAssetTitle: 'إضافة أصل جديد',
+        addAssetSubtitle: 'سعر الشراء وتاريخه اختياريان',
+        assetNameLabel: 'اسم الأصل',
+        assetNamePlaceholderGold: 'مثلاً: سبيكة 10 جرام',
+        assetNamePlaceholderCrypto: 'مثلاً: مدخرات بيتكوين',
+        assetNamePlaceholderGeneric: 'اسم يوصف الأصل',
+        amountLabelWeight: 'الكمية (جرام)',
+        amountLabelCurrency: 'الكمية (وحدات العملة)',
+        amountLabelCrypto: 'الكمية (وحدات العملة الرقمية)',
+        karatLabel: 'العيار',
+        purityLabel: 'النقاء',
+        currencyLabel: 'العملة',
+        coinLabel: 'العملة الرقمية',
+        buyPriceOptionalLabel: 'سعر الشراء للوحدة (ج.م) · اختياري',
+        buyPriceHint: 'اتركه فارغاً لو غير مسجل',
+        purchaseDateLabel: 'تاريخ الشراء · اختياري',
+        notesLabel: 'ملاحظات',
+        notesPlaceholder: 'مثلاً: محفوظ في البيت',
+        saveAsset: 'حفظ الأصل',
+        deleteConfirmTitle: 'حذف هذا الأصل؟',
+        deleteConfirmDescription: 'لن تتمكن من التراجع عن هذا الإجراء.',
+        columnAsset: 'الأصل',
+        columnAmount: 'الكمية',
+        columnPrice: 'سعر الوحدة',
+        columnCurrentValue: 'القيمة الحالية',
+        columnPurchaseValue: 'قيمة الشراء',
+        columnProfitLoss: 'الربح / الخسارة',
+        infoNoteTitle: 'ملاحظة',
+        infoNoteBody: 'القيم الحالية محسوبة بأسعار إعادة البيع المقدّرة (سعر شراء الجرام للمعادن، ومتوسط سعر شراء البنوك للعملات). الأصول من غير سعر شراء مسجل تظهر «غير مسجل»، والقيم التي لا يتوفر لها سعر سوق تظهر «غير متاح».',
+        currentPriceLabel: 'سعر الوحدة الحالي',
       },
       watchlist: {
         title: 'المراقبة',
@@ -1560,6 +1830,9 @@ export const translations: Record<Language, Translations> = {
       appName: 'Odamak',
       errorPasswordMismatch: 'Passwords do not match',
       errorPasswordLength: 'Password must be at least 6 characters',
+      show: 'Show',
+      hide: 'Hide',
+      securityCheckError: 'Please complete the security check',
     },
     charts: {
       chartTitle: 'Chart',
@@ -1581,13 +1854,14 @@ export const translations: Record<Language, Translations> = {
         appTitle: 'Odamak',
         appSubtitle: 'Track gold and currency prices in real-time',
         title: 'Sign In',
-        subtitle: 'Enter your credentials to access your account',
+        subtitle: 'Sign in to follow your portfolio, price alerts and saved calculations',
         emailLabel: 'Email',
         passwordLabel: 'Password',
         forgotPassword: 'Forgot password?',
         submitButton: 'Sign In',
         submitting: 'Signing in...',
         or: 'or',
+        socialDivider: 'or sign in with email',
         demoLogin: 'Demo Login',
         noAccount: "Don't have an account?",
         createAccount: 'Create New Account',
@@ -1597,18 +1871,20 @@ export const translations: Record<Language, Translations> = {
         privacyLink: 'Privacy Policy',
         footerText: 'The app provides the latest gold and currency prices with advanced tracking features',
         errorDefault: 'An error occurred while signing in',
+        rememberMe: 'Keep me signed in',
+        invalidEmail: 'Enter a valid email address',
       },
       register: {
         appTitle: 'Odamak',
         appSubtitle: 'Join to track gold and currency prices',
         title: 'Create New Account',
-        subtitle: 'Create your account to access advanced features',
+        subtitle: 'Track what you own, get price alerts, and keep your calculations saved',
         firstNameLabel: 'First Name',
         firstNamePlaceholder: 'Enter your first name',
         lastNameLabel: 'Last Name',
         lastNamePlaceholder: 'Enter your last name',
         emailLabel: 'Email',
-        phoneLabel: 'Phone Number (optional)',
+        phoneLabel: 'Phone Number',
         passwordLabel: 'Password',
         passwordPlaceholder: 'At least 6 characters',
         passwordHint: 'Password must be at least 6 characters',
@@ -1617,6 +1893,7 @@ export const translations: Record<Language, Translations> = {
         submitButton: 'Create Account',
         submitting: 'Creating account...',
         or: 'or',
+        socialDivider: 'or sign up with email',
         demoRegister: 'Create Demo Account',
         hasAccount: 'Already have an account?',
         loginLink: 'Sign In',
@@ -1634,6 +1911,9 @@ export const translations: Record<Language, Translations> = {
         errorPasswordMismatch: 'Passwords do not match',
         errorPasswordLength: 'Password must be at least 6 characters',
         errorDefault: 'An error occurred while creating the account',
+        sendAlerts: 'Send me price alerts by email',
+        phoneInvalid: 'Please enter a valid phone number',
+        phoneValid: 'Phone number is valid',
       },
       forgotPassword: {
         title: 'Reset Password',
@@ -1697,6 +1977,33 @@ export const translations: Record<Language, Translations> = {
         resetPasswordButton: 'Reset Password',
         resetSuccess: 'Password reset successfully!',
       },
+      social: {
+        google: 'Google',
+        apple: 'Apple',
+        facebook: 'Facebook',
+      },
+      passwordStrength: {
+        empty: 'Enter a password',
+        weak: 'Weak',
+        fair: 'Fair',
+        strong: 'Strong',
+      },
+      authAside: {
+        loginTitle: 'Your gold, tracked in one place.',
+        loginSubtitle: 'Live local and global prices, a portfolio that values itself, and alerts that reach you the moment a karat hits your target.',
+        registerTitle: 'Start tracking in under a minute.',
+        registerSubtitle: 'Add what you own once and we keep valuing it from live market data — no spreadsheets, no manual prices.',
+        livePrices: 'Live prices',
+        referencePrices: "Today's reference prices",
+        benefitPortfolioTitle: 'Portfolio that values itself',
+        benefitPortfolioDesc: 'Gold, silver, currencies and crypto priced from stored market data.',
+        benefitAlertsTitle: 'Price alerts',
+        benefitAlertsDesc: 'Tell us your target and we message you when a karat reaches it.',
+        benefitCalculatorsTitle: 'Smart calculators',
+        benefitCalculatorsDesc: 'Making charge, shop resale, karat conversion, stamp duty and zakat.',
+        benefitSyncTitle: 'Saved across devices',
+        benefitSyncDesc: 'Your assets and alerts follow you on web and the mobile app.',
+      },
       settings: {
         title: 'Settings',
         subtitle: 'Manage your account and preferences',
@@ -1710,12 +2017,25 @@ export const translations: Record<Language, Translations> = {
         profileDescription: 'Your personal information',
         nameLabel: 'Name',
         emailLabel: 'Email',
+        firstNameLabel: 'First Name',
+        lastNameLabel: 'Last Name',
+        editProfileButton: 'Edit',
+        saveButton: 'Save',
+        savingButton: 'Saving...',
+        profileUpdated: 'Your profile was updated successfully',
+        errorUpdateProfile: 'Failed to update profile',
+        deleteButton: 'Delete',
         changeEmailSection: 'Change Email',
         changeEmailDescription: 'A verification code will be sent to the new email',
         changeEmailButton: 'Change Email',
         newEmailLabel: 'New Email',
         changingEmail: 'Changing...',
         emailOtpSent: 'Verification code sent to new email',
+        newEmailTaken: 'This email is already in use',
+        newEmailSameAsCurrent: 'This is already your current email',
+        emailOtpTitle: 'Verify Your Email',
+        emailOtpSubtitle: 'Enter the verification code sent to',
+        emailChangeSuccess: 'Email changed successfully',
         changePasswordSection: 'Change Password',
         changePasswordDescription: 'Choose a strong password to protect your account',
         changePasswordButton: 'Change Password',
@@ -1727,8 +2047,42 @@ export const translations: Record<Language, Translations> = {
         changingPassword: 'Changing...',
         passwordChanged: 'Password changed successfully',
         cancel: 'Cancel',
+        signOut: 'Sign out',
+        savedLabel: 'Saved',
+        unsavedChanges: 'Unsaved changes',
+        showPasswords: 'Show passwords',
+        hidePasswords: 'Hide passwords',
+        passwordRuleLength: 'At least 6 characters',
+        passwordRuleNumber: 'Contains a number',
+        passwordRuleMatch: 'New password matches confirmation',
+        connectedAccounts: {
+          title: 'Connected accounts',
+          hint: 'Use them to sign in faster',
+          connect: 'Connect',
+          disconnect: 'Disconnect',
+          notConnected: 'Not connected',
+        },
+        sessions: {
+          title: 'Active sessions',
+          subtitle: "Sign out any device you don't recognise",
+          thisDevice: 'This device',
+        },
+        topics: {
+          title: 'What to notify me about',
+          subtitle: 'These apply to every channel you enable',
+          priceAlerts: 'Price alerts',
+          priceAlertsDesc: 'When a gold karat or currency hits your target',
+          dailySummary: 'Daily summary',
+          dailySummaryDesc: 'One message each evening with closing prices',
+          marketNews: 'Market news',
+          marketNewsDesc: 'Headlines that move gold prices',
+          portfolioChanges: 'Portfolio changes',
+          portfolioChangesDesc: 'Weekly value and profit summary of your assets',
+        },
         notificationsSection: 'Notification Channels',
         notificationsDescription: 'Choose how you want to receive notifications',
+        comingSoonBadge: 'Coming soon',
+        comingSoonNotice: 'Notification channels are still in development and will be available soon.',
         emailNotifications: 'Email Notifications',
         emailNotificationsDesc: 'Receive price alerts via email',
         smsNotifications: 'SMS Notifications',
@@ -1772,6 +2126,8 @@ export const translations: Record<Language, Translations> = {
           errorVerify: 'Failed to send verification code',
           errorDelete: 'Failed to delete the number',
           errorSetDefault: 'Failed to set default number',
+          retry: 'Retry',
+          errorLoadDescription: 'Check your connection and try again. Your saved numbers are safe.',
           otpTitle: 'Verify Phone Number',
           otpSubtitle: 'Enter the verification code sent to',
           otpSuccess: 'Verified Successfully!',
@@ -1788,17 +2144,22 @@ export const translations: Record<Language, Translations> = {
         subtitle: 'Compare official bank rates vs parallel market',
       },
       portfolio: {
-        title: 'Portfolio',
+        title: 'Asset Portfolio',
         subtitle: 'Your gold and currency holdings',
         comingSoon: 'Coming soon...',
-        totalWealth: 'Total Portfolio',
+        lastUpdated: 'Last updated',
+        hideNumbers: 'Hide numbers',
+        showNumbers: 'Show numbers',
+        totalWealth: 'Total portfolio value',
         totalProfitLoss: 'Total Profit/Loss',
-        assetDistribution: 'Asset Distribution',
+        assetDistribution: 'Portfolio distribution',
         all: 'All',
         gold: 'Gold',
+        silver: 'Silver',
         currencies: 'Currencies',
+        crypto: 'Crypto',
         currentValue: 'Current Value',
-        profitLoss: 'Profit/Loss',
+        profitLoss: 'Profit / Loss',
         addAsset: 'Add Asset',
         recordBuy: 'Record Buy',
         edit: 'Edit',
@@ -1810,8 +2171,52 @@ export const translations: Record<Language, Translations> = {
         date: 'Date',
         save: 'Save',
         cancel: 'Cancel',
-        noAssets: 'No Assets',
-        noAssetsDescription: 'Start by adding your gold and currency holdings to track your portfolio',
+        noAssets: 'Start by recording your first asset',
+        noAssetsDescription: 'Record the gold, silver and currencies you own, and we will value them from stored market prices — no numbers to enter yourself.',
+        assetsSuffix: 'assets',
+        purchaseValue: 'Purchase value',
+        pricedAssets: 'assets with a recorded buy price',
+        ofLabel: 'of',
+        bestCategory: 'Best performing category',
+        notAvailable: 'Unavailable',
+        notRecorded: 'Not recorded',
+        distributionByValue: 'By value',
+        distributionByCount: 'By count',
+        myAssets: 'My assets',
+        viewCards: 'Cards',
+        viewTable: 'Table',
+        emptyTitle: 'Start by recording your first asset',
+        emptyDescription: 'Record the gold, silver and currencies you own, and we will value them from stored market prices — no numbers to enter yourself.',
+        addAssetTitle: 'Add new asset',
+        addAssetSubtitle: 'Buy price and date are optional',
+        assetNameLabel: 'Asset name',
+        assetNamePlaceholderGold: 'e.g. 10 gram gold bar',
+        assetNamePlaceholderCrypto: 'e.g. Bitcoin savings',
+        assetNamePlaceholderGeneric: 'A name describing the asset',
+        amountLabelWeight: 'Amount (grams)',
+        amountLabelCurrency: 'Amount (currency units)',
+        amountLabelCrypto: 'Amount (coin units)',
+        karatLabel: 'Karat',
+        purityLabel: 'Purity',
+        currencyLabel: 'Currency',
+        coinLabel: 'Coin',
+        buyPriceOptionalLabel: 'Buy price per unit (EGP) · optional',
+        buyPriceHint: 'Leave blank if not recorded',
+        purchaseDateLabel: 'Purchase date · optional',
+        notesLabel: 'Notes',
+        notesPlaceholder: 'e.g. Stored at home',
+        saveAsset: 'Save asset',
+        deleteConfirmTitle: 'Delete this asset?',
+        deleteConfirmDescription: 'This action cannot be undone.',
+        columnAsset: 'Asset',
+        columnAmount: 'Amount',
+        columnPrice: 'Unit price',
+        columnCurrentValue: 'Current value',
+        columnPurchaseValue: 'Purchase value',
+        columnProfitLoss: 'Profit / Loss',
+        infoNoteTitle: 'Note',
+        infoNoteBody: 'Current values use estimated resale prices (gram buy price for metals, average official-bank buy rate for currencies). Assets without a recorded buy price show "Not recorded", and values with no market price show "Unavailable".',
+        currentPriceLabel: 'Current unit price',
       },
       watchlist: {
         title: 'Watchlist',

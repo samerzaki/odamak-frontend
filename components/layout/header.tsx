@@ -10,9 +10,10 @@ import { ThemeToggle } from './theme-toggle';
 import { LanguageSwitcher } from './language-switcher';
 import { QuickSearch } from './quick-search';
 import { NavSheet } from './nav-sheet';
+import { Logo } from './logo';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
-import { primaryNav, isPrimaryNavActive } from '@/lib/navigation';
+import { primaryNav, isPrimaryNavActive, isChromelessPath } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ export function Header() {
   const isRTL = language === 'ar';
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const chromeless = isChromelessPath(pathname);
 
   useEffect(() => {
     const openSearchWithShortcut = (event: KeyboardEvent) => {
@@ -43,36 +45,16 @@ export function Header() {
     return () => document.removeEventListener('keydown', openSearchWithShortcut);
   }, []);
 
+  // Auth pages render their own header inside components/auth/auth-shell.tsx.
+  if (chromeless) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 h-[66px] bg-bg border-b border-line">
       <div className="h-full px-4 md:px-0">
         <div className="mx-auto flex h-full max-w-[1300px] items-center gap-3 md:gap-6">
-      <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Odamak home">
-        {/* The light logo is the legible counterpart for the dark site theme. */}
-        <img
-          src="https://cdn.odamak.com/images/brand/logo-square-primary.svg"
-          alt="Odamak"
-          className="h-9 w-9 dark:hidden"
-        />
-        <img
-          src="https://cdn.odamak.com/images/brand/logo-square-light.svg"
-          alt=""
-          aria-hidden="true"
-          className="hidden h-9 w-9 dark:block"
-        />
-        <img
-          src="https://cdn.odamak.com/images/brand/logo-primary.svg"
-          alt=""
-          aria-hidden="true"
-          className="h-7 w-auto dark:hidden"
-        />
-        <img
-          src="https://cdn.odamak.com/images/brand/logo-light.svg"
-          alt=""
-          aria-hidden="true"
-          className="hidden h-7 w-auto dark:block"
-        />
-      </Link>
+      <Logo />
 
       <nav className="hidden lg:flex items-center gap-0.5">
         {primaryNav.map((item) => {

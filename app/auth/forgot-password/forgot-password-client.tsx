@@ -6,7 +6,8 @@ import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AuthCard } from "@/components/auth/auth-card";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { forgotPassword } from "@/lib/api-auth";
 import { ArrowRight, ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import { Turnstile } from "@/components/auth/turnstile";
@@ -28,7 +29,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     if (!turnstileToken) {
-      setError(isRTL ? "يرجى إكمال التحقق الأمني قبل المتابعة." : "Please complete the security check before continuing.");
+      setError(t.common.securityCheckError);
       return;
     }
 
@@ -50,7 +51,7 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <AuthCard appTitle={t.common.appName} appSubtitle={t.pages.login.appSubtitle} showTabs={false}>
+      <AuthShell showTabs={false}>
         <div className="text-center">
           <div className="mx-auto w-14 h-14 bg-up-soft rounded-full flex items-center justify-center mb-4">
             <CheckCircle className="w-7 h-7 text-up" />
@@ -61,9 +62,9 @@ export default function ForgotPasswordPage() {
           <p className="text-[13px] text-muted mb-6">{t.pages.forgotPassword.successDescription}</p>
         </div>
 
-        <div className="p-3 text-[13px] text-up bg-up-soft rounded-[10px] mb-4">
+        <InlineAlert variant="success" className="mb-4">
           {t.pages.forgotPassword.successEmailSent} <strong className="num">{email}</strong>
-        </div>
+        </InlineAlert>
 
         <p className="text-center text-[13px] text-muted mb-4">
           {t.pages.forgotPassword.successOpenEmail}
@@ -77,17 +78,12 @@ export default function ForgotPasswordPage() {
         </Link>
 
         <p className="mt-4 text-[12px] text-center text-dim">{t.pages.forgotPassword.successCheckSpam}</p>
-      </AuthCard>
+      </AuthShell>
     );
   }
 
   return (
-    <AuthCard appTitle={t.common.appName} appSubtitle={t.pages.login.appSubtitle} showTabs={false}>
-      <div className="text-center mb-6">
-        <h2 className="font-heading text-[18px] font-semibold text-text">{t.pages.forgotPassword.title}</h2>
-        <p className="text-[13px] text-muted mt-1">{t.pages.forgotPassword.subtitle}</p>
-      </div>
-
+    <AuthShell showTabs={false} title={t.pages.forgotPassword.title} subtitle={t.pages.forgotPassword.subtitle}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">{t.pages.forgotPassword.emailLabel}</Label>
@@ -111,11 +107,7 @@ export default function ForgotPasswordPage() {
           language={isRTL ? "ar" : "en"}
         />
 
-        {error && (
-          <div className="p-3 text-[13px] text-down bg-down-soft rounded-[10px]">
-            {error}
-          </div>
-        )}
+        {error && <InlineAlert variant="error">{error}</InlineAlert>}
 
         <Button type="submit" className="w-full h-12" size="lg" disabled={isLoading || !turnstileToken}>
           <Mail className="h-4 w-4" />
@@ -136,6 +128,6 @@ export default function ForgotPasswordPage() {
           {t.pages.forgotPassword.loginLink}
         </Link>
       </p>
-    </AuthCard>
+    </AuthShell>
   );
 }
